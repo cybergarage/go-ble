@@ -15,6 +15,8 @@
 package ble
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -35,4 +37,11 @@ func mustAddressFromBytes(b []byte) Address {
 		return addr
 	}
 	return Address(uuid.Nil)
+}
+
+// String returns the string representation of the Bluetooth address.
+func (a Address) String() string {
+	b := [16]byte(a)
+	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x",
+		b[10], b[11], b[12], b[13], b[14], b[15])
 }
