@@ -16,12 +16,38 @@ package ble
 
 import (
 	"context"
+	"time"
+
+	"tinygo.org/x/bluetooth"
 )
 
-// OnScanResult is the callback function type for scan results.
-type OnScanResult func(Device)
+var adapter = bluetooth.DefaultAdapter
 
-// Scanner defines the interface for a Bluetooth scanner.
-type Scanner interface {
-	Scan(ctx context.Context, onResult OnScanResult) error
+type tinyScanner struct {
+}
+
+func NewScanner() Scanner {
+	return &tinyScanner{}
+}
+
+// Scan starts scanning for Bluetooth devices.
+func (s *tinyScanner) Scan(ctx context.Context, onResult OnScanResult) error {
+	err := adapter.Scan(func(adapter *bluetooth.Adapter, scanRes bluetooth.ScanResult) {
+		onResult(newDeviceFromScanResult(scanRes))
+	})
+	if err != nil {
+		return err
+	}
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				adapter.StopScan()
+				return
+			default:
+				time.Sleep(500 * time.Millisecond)
+			}
+		}
+	}()
+	return nil
 }
