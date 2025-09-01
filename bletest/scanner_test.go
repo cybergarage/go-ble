@@ -14,7 +14,27 @@
 
 package bletest
 
-import "testing"
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/cybergarage/go-ble/ble"
+	"github.com/cybergarage/go-logger/log"
+)
 
 func TestScanner(t *testing.T) {
+	log.EnableStdoutDebug(true)
+
+	scanner := ble.NewScanner()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := scanner.Scan(ctx,
+		func(dev ble.Device) {
+			log.Infof("Device found: %v", dev.Address())
+		})
+	if err != nil {
+		log.Errorf("Failed to scan: %v", err)
+	}
 }
