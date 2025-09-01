@@ -14,7 +14,13 @@
 
 package ble
 
-// Central represents a Bluetooth central device.
-type Central interface {
+type tinyCentral struct {
 	Scanner
+}
+
+// NewCentral creates a new Bluetooth central device.
+func NewCentral() (Central, error) {
+	return &tinyCentral{
+		Scanner: NewScanner(),
+	}, nil
 }
