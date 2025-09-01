@@ -19,13 +19,20 @@ import (
 )
 
 type tinyDevice struct {
+	company    Company
 	scanResult bluetooth.ScanResult
 }
 
 func newDeviceFromScanResult(scanResult bluetooth.ScanResult) Device {
 	return &tinyDevice{
+		company:    nil,
 		scanResult: scanResult,
 	}
+}
+
+// LocalName returns the local name of the device.
+func (dev *tinyDevice) LocalName() string {
+	return dev.scanResult.LocalName()
 }
 
 // Address returns the Bluetooth address of the device.

@@ -16,6 +16,8 @@ package ble
 
 // Device represents a Bluetooth device.
 type Device interface {
+	// LocalName returns the local name of the device.
+	LocalName() string
 	// Address returns the Bluetooth address of the device.
 	Address() Address
 }
