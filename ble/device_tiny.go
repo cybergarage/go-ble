@@ -14,8 +14,22 @@
 
 package ble
 
-// Device represents a Bluetooth device.
-type Device interface {
-	// Address returns the Bluetooth address of the device.
-	Address() Address
+import (
+	"tinygo.org/x/bluetooth"
+)
+
+type tinyDevice struct {
+	scanResult bluetooth.ScanResult
+}
+
+func newDeviceFromScanResult(scanResult bluetooth.ScanResult) Device {
+	return &tinyDevice{
+		scanResult: scanResult,
+	}
+}
+
+// Address returns the Bluetooth address of the device.
+func (dev *tinyDevice) Address() Address {
+	scanAddr := dev.scanResult.Address.Bytes()
+	return mustAddressFromBytes(scanAddr[:])
 }
