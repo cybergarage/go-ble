@@ -18,17 +18,17 @@ all: download
 
 .PHONY: download
 
-AD_TYPES_YAML=ad_types.yaml
-AD_TYPES_URL=https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/core/
+AD_TYPES_YAML="ad_types.yaml"
+AD_TYPES_URL="https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/core/"
 
 ${AD_TYPES_YAML}:
-	@wget -q -O ${AD_TYPES_YAML} ${AD_TYPES_URL}
+	@wget -q -O ${AD_TYPES_YAML} ${AD_TYPES_URL}${AD_TYPES_YAML}
 
-COMPANY_IDENTIFIERS_YAML=company_identifiers.yaml
-COMPANY_IDENTIFIERS_URL=https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/
+COMPANY_IDENTIFIERS_YAML="company_identifiers.yaml"
+COMPANY_IDENTIFIERS_URL="https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/"
 
 ${COMPANY_IDENTIFIERS_YAML}:
-	@wget -q -O ${COMPANY_IDENTIFIERS_YAML} ${COMPANY_IDENTIFIERS_URL}
+	@wget -q -O ${COMPANY_IDENTIFIERS_YAML} ${COMPANY_IDENTIFIERS_URL}${COMPANY_IDENTIFIERS_YAML} 
 
 download: ${COMPANY_IDENTIFIERS_YAML} ${AD_TYPES_YAML}
 	@echo "Downloaded"
