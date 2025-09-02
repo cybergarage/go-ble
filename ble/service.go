@@ -14,7 +14,10 @@
 
 package ble
 
-import "fmt"
+import (
+	"encoding/hex"
+	"fmt"
+)
 
 // Service represents a Bluetooth service.
 type Service interface {
@@ -22,8 +25,8 @@ type Service interface {
 	UUID() UUID
 	// Name returns the name of the service.
 	Name() string
-	// ID returns the ID of the service.
-	ID() string
+	// Data returns the data of the service.
+	Data() []byte
 	// String returns a string representation of the service.
 	String() string
 }
@@ -31,14 +34,14 @@ type Service interface {
 type service struct {
 	uuid UUID
 	name string
-	id   string
+	data []byte
 }
 
-func newService(uuid UUID, name string, id string) Service {
+func newService(uuid UUID, name string, data []byte) Service {
 	return &service{
 		uuid: uuid,
 		name: name,
-		id:   id,
+		data: data,
 	}
 }
 
@@ -52,12 +55,12 @@ func (s *service) Name() string {
 	return s.name
 }
 
-// ID returns the ID of the service.
-func (s *service) ID() string {
-	return s.id
+// Data returns the data of the service.
+func (s *service) Data() []byte {
+	return s.data
 }
 
 // String returns a string representation of the service.
 func (s *service) String() string {
-	return fmt.Sprintf("Service[UUID: %s, Name: %s, ID: %s]", s.uuid, s.name, s.id)
+	return fmt.Sprintf("Service[UUID: %s, Name: %s, Data: %v]", s.uuid, s.name, hex.EncodeToString(s.data))
 }

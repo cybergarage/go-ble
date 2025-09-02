@@ -22,8 +22,8 @@ type Device interface {
 	LocalName() string
 	// Address returns the Bluetooth address of the device.
 	Address() Address
-	// ServiceUUIDs returns the Bluetooth service UUIDs of the device.
-	ServiceUUIDs() []UUID
+	// Services returns the Bluetooth services of the device.
+	Services() []Service
 	// RSSI returns the received signal strength indicator of the device.
 	RSSI() int
 }

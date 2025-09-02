@@ -21,12 +21,14 @@ import (
 type tinyDevice struct {
 	scanResult   bluetooth.ScanResult
 	manufacturer Manufacturer
+	services     []Service
 }
 
 func newDeviceFromScanResult(scanResult bluetooth.ScanResult) Device {
 	return &tinyDevice{
 		manufacturer: nil,
 		scanResult:   scanResult,
+		services:     nil,
 	}
 }
 
@@ -60,7 +62,7 @@ func (dev *tinyDevice) LocalName() string {
 // Address returns the Bluetooth address of the device.
 func (dev *tinyDevice) Address() Address {
 	scanAddr := dev.scanResult.Address.Bytes()
-	return mustAddressFromBytes(scanAddr[:])
+	return Address(mustUUIDFromBytes(scanAddr[:]))
 }
 
 // RSSI returns the received signal strength indicator of the device.
@@ -68,20 +70,19 @@ func (dev *tinyDevice) RSSI() int {
 	return int(dev.scanResult.RSSI)
 }
 
-func (dev *tinyDevice) ServiceUUIDs() []UUID {
-	newUUIDFromBytes := func(b bluetooth.UUID) UUID {
-		var out [16]byte
-		for i, v := range b {
-			out[i*4+0] = byte(v)
-			out[i*4+1] = byte(v >> 8)
-			out[i*4+2] = byte(v >> 16)
-			out[i*4+3] = byte(v >> 24)
+// Services returns the Bluetooth services of the device.
+func (dev *tinyDevice) Services() []Service {
+	if dev.services == nil {
+		dev.services = []Service{}
+		for _, sd := range dev.scanResult.ServiceData() {
+			uuidBytes := sd.UUID.Bytes()
+			service := newService(
+				mustUUIDFromBytes(uuidBytes[:]),
+				"",
+				sd.Data,
+			)
+			dev.services = append(dev.services, service)
 		}
-		return UUID(out)
 	}
-	uuids := []UUID{}
-	for _, u := range dev.scanResult.ServiceUUIDs() {
-		uuids = append(uuids, newUUIDFromBytes(u))
-	}
-	return uuids
+	return dev.services
 }

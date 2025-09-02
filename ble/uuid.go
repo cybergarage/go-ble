@@ -20,3 +20,19 @@ import (
 
 // UUID represents a Bluetooth UUID.
 type UUID uuid.UUID
+
+func newUUIDFromBytes(b []byte) (UUID, error) {
+	addr, err := uuid.FromBytes(b)
+	if err != nil {
+		return UUID{}, err
+	}
+	return UUID(addr), nil
+}
+
+func mustUUIDFromBytes(b []byte) UUID {
+	addr, err := newUUIDFromBytes(b)
+	if err == nil {
+		return addr
+	}
+	return UUID(uuid.Nil)
+}

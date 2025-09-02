@@ -16,28 +16,10 @@ package ble
 
 import (
 	"fmt"
-
-	"github.com/google/uuid"
 )
 
 // Address represents a Bluetooth address.
 type Address UUID
-
-func newAddressFromBytes(b []byte) (Address, error) {
-	addr, err := uuid.FromBytes(b)
-	if err != nil {
-		return Address{}, err
-	}
-	return Address(addr), nil
-}
-
-func mustAddressFromBytes(b []byte) Address {
-	addr, err := newAddressFromBytes(b)
-	if err == nil {
-		return addr
-	}
-	return Address(uuid.Nil)
-}
 
 // String returns the string representation of the Bluetooth address.
 func (a Address) String() string {
