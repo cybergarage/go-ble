@@ -36,3 +36,8 @@ func mustUUIDFromBytes(b []byte) UUID {
 	}
 	return UUID(uuid.Nil)
 }
+
+// String returns the string representation of the UUID.
+func (u UUID) String() string {
+	return uuid.UUID(u).String()
+}
