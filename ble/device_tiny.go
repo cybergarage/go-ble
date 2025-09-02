@@ -30,6 +30,11 @@ func newDeviceFromScanResult(scanResult bluetooth.ScanResult) Device {
 	}
 }
 
+// Manufacturer returns the Bluetooth manufacturer of the device.
+func (dev *tinyDevice) Manufacturer() Company {
+	return dev.company
+}
+
 // LocalName returns the local name of the device.
 func (dev *tinyDevice) LocalName() string {
 	return dev.scanResult.LocalName()
@@ -39,4 +44,9 @@ func (dev *tinyDevice) LocalName() string {
 func (dev *tinyDevice) Address() Address {
 	scanAddr := dev.scanResult.Address.Bytes()
 	return mustAddressFromBytes(scanAddr[:])
+}
+
+// RSSI returns the received signal strength indicator of the device.
+func (dev *tinyDevice) RSSI() int {
+	return int(dev.scanResult.RSSI)
 }
