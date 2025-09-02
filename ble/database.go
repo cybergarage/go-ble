@@ -61,7 +61,7 @@ func (db *database) LookupCompany(id int) (Company, bool) {
 		}
 	}
 	return &company{
-		Value:  id,
-		String: "",
+		Value: id,
+		Nam:   "",
 	}, false
 }

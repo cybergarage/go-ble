@@ -14,17 +14,21 @@
 
 package ble
 
+import "fmt"
+
 // Company represents a Bluetooth company.
 type Company interface {
 	// ID returns the company ID.
 	ID() int
 	// Name returns the company name.
 	Name() string
+	// String returns a string representation of the company.
+	String() string
 }
 
 type company struct {
-	Value  int    `yaml:"value"`
-	String string `yaml:"name"`
+	Value int    `yaml:"value"`
+	Nam   string `yaml:"name"`
 }
 
 // nolint: tagliatelle
@@ -39,5 +43,10 @@ func (c *company) ID() int {
 
 // Name returns the company name.
 func (c *company) Name() string {
-	return c.String
+	return c.Nam
+}
+
+// String returns a string representation of the company.
+func (c *company) String() string {
+	return fmt.Sprintf("Company(ID: %d, Name: %s)", c.Value, c.Nam)
 }
