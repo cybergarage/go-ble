@@ -34,6 +34,16 @@ type manufacturer struct {
 	data    []byte
 }
 
+func newNilManufacturer() Manufacturer {
+	return &manufacturer{
+		company: &company{
+			Value: 0,
+			Nam:   "Unknown",
+		},
+		data: nil,
+	}
+}
+
 func newManufacturer(id int, data []byte) Manufacturer {
 	company, _ := DefaultDatabase().LookupCompany(id)
 	return &manufacturer{

@@ -17,11 +17,13 @@ package ble
 // Device represents a Bluetooth device.
 type Device interface {
 	// Manufacturer returns the Bluetooth manufacturer of the device.
-	Manufacturer() Company
+	Manufacturer() Manufacturer
 	// LocalName returns the local name of the device.
 	LocalName() string
 	// Address returns the Bluetooth address of the device.
 	Address() Address
+	// ServiceUUIDs returns the Bluetooth service UUIDs of the device.
+	ServiceUUIDs() []UUID
 	// RSSI returns the received signal strength indicator of the device.
 	RSSI() int
 }

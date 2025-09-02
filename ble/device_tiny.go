@@ -19,20 +19,37 @@ import (
 )
 
 type tinyDevice struct {
-	company    Company
-	scanResult bluetooth.ScanResult
+	scanResult   bluetooth.ScanResult
+	manufacturer Manufacturer
 }
 
 func newDeviceFromScanResult(scanResult bluetooth.ScanResult) Device {
 	return &tinyDevice{
-		company:    nil,
-		scanResult: scanResult,
+		manufacturer: nil,
+		scanResult:   scanResult,
 	}
 }
 
 // Manufacturer returns the Bluetooth manufacturer of the device.
-func (dev *tinyDevice) Manufacturer() Company {
-	return dev.company
+func (dev *tinyDevice) Manufacturer() Manufacturer {
+	if dev.manufacturer == nil {
+		manufacturers := dev.scanResult.ManufacturerData()
+		switch len(manufacturers) {
+		case 0:
+			dev.manufacturer = newNilManufacturer()
+		case 1:
+			manufacturer := manufacturers[0]
+			dev.manufacturer = newManufacturer(int(manufacturer.CompanyID), manufacturer.Data)
+		default:
+			for _, v := range manufacturers {
+				dev.manufacturer = newManufacturer(int(v.CompanyID), v.Data)
+			}
+		}
+	}
+	if dev.manufacturer.Company().ID() == 2409 {
+		return dev.manufacturer
+	}
+	return dev.manufacturer
 }
 
 // LocalName returns the local name of the device.
@@ -49,4 +66,22 @@ func (dev *tinyDevice) Address() Address {
 // RSSI returns the received signal strength indicator of the device.
 func (dev *tinyDevice) RSSI() int {
 	return int(dev.scanResult.RSSI)
+}
+
+func (dev *tinyDevice) ServiceUUIDs() []UUID {
+	newUUIDFromBytes := func(b bluetooth.UUID) UUID {
+		var out [16]byte
+		for i, v := range b {
+			out[i*4+0] = byte(v)
+			out[i*4+1] = byte(v >> 8)
+			out[i*4+2] = byte(v >> 16)
+			out[i*4+3] = byte(v >> 24)
+		}
+		return UUID(out)
+	}
+	uuids := []UUID{}
+	for _, u := range dev.scanResult.ServiceUUIDs() {
+		uuids = append(uuids, newUUIDFromBytes(u))
+	}
+	return uuids
 }
