@@ -15,6 +15,9 @@
 package ble
 
 import (
+	"fmt"
+	"strings"
+
 	"tinygo.org/x/bluetooth"
 )
 
@@ -85,4 +88,14 @@ func (dev *tinyDevice) Services() []Service {
 		}
 	}
 	return dev.services
+}
+
+// String returns a string representation of the device.
+func (dev *tinyDevice) String() string {
+	services := []string{}
+	for _, s := range dev.Services() {
+		services = append(services, s.String())
+	}
+	return fmt.Sprintf("Device[Address: %s, LocalName: %s, Manufacturer: %s, RSSI: %d, Services: (%s)]",
+		dev.Address(), dev.LocalName(), dev.Manufacturer().String(), dev.RSSI(), strings.Join(services, ", "))
 }

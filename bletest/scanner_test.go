@@ -32,7 +32,7 @@ func TestScanner(t *testing.T) {
 	defer cancel()
 	err := scanner.Scan(ctx,
 		func(dev ble.Device) {
-			log.Infof("Device found: %v, Manufacturer: %v", dev.Address(), dev.Manufacturer())
+			log.Infof("Device found: dev=%s", dev.String())
 		})
 	if err != nil {
 		log.Errorf("Failed to scan: %v", err)

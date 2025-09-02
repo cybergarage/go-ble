@@ -26,4 +26,6 @@ type Device interface {
 	Services() []Service
 	// RSSI returns the received signal strength indicator of the device.
 	RSSI() int
+	// String returns a string representation of the device.
+	String() string
 }
