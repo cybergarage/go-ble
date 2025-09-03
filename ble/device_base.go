@@ -50,16 +50,6 @@ func (baseDev *baseDevice) LastSeenAt() time.Time {
 	return baseDev.lastSeenAt
 }
 
-// LookupService looks up a Bluetooth service by its UUID.
-func (baseDev *baseDevice) lookupServiceFrom(services []Service, uuid UUID) (Service, bool) {
-	for _, s := range services {
-		if s.UUID().Equal(uuid) {
-			return s, true
-		}
-	}
-	return nil, false
-}
-
 // String returns a string representation of the device.
 func (baseDev *baseDevice) StringFrom(dev Device) string {
 	services := []string{}

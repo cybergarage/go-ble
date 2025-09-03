@@ -22,15 +22,15 @@ type tinyDevice struct {
 	*baseDevice
 	scanResult   bluetooth.ScanResult
 	manufacturer Manufacturer
-	services     []Service
+	serviceMap   map[UUID]Service
 }
 
-func newDeviceFromScanResult(scanResult bluetooth.ScanResult) Device {
+func newDeviceFromScanResult(scanResult bluetooth.ScanResult) *tinyDevice {
 	return &tinyDevice{
 		baseDevice:   newBaseDevice(),
 		manufacturer: nil,
 		scanResult:   scanResult,
-		services:     nil,
+		serviceMap:   nil,
 	}
 }
 
@@ -74,13 +74,14 @@ func (dev *tinyDevice) RSSI() int {
 
 // LookupService looks up a Bluetooth service by its UUID.
 func (dev *tinyDevice) LookupService(uuid UUID) (Service, bool) {
-	return dev.lookupServiceFrom(dev.Services(), uuid)
+	service, ok := dev.serviceMap[uuid]
+	return service, ok
 }
 
 // Services returns the Bluetooth services of the device.
 func (dev *tinyDevice) Services() []Service {
-	if dev.services == nil {
-		dev.services = []Service{}
+	if dev.serviceMap == nil {
+		dev.serviceMap = make(map[UUID]Service)
 		for _, sd := range dev.scanResult.ServiceData() {
 			uuidBytes := sd.UUID.Bytes()
 			service := newService(
@@ -88,10 +89,14 @@ func (dev *tinyDevice) Services() []Service {
 				"",
 				sd.Data,
 			)
-			dev.services = append(dev.services, service)
+			dev.serviceMap[service.UUID()] = service
 		}
 	}
-	return dev.services
+	services := make([]Service, 0, len(dev.serviceMap))
+	for _, service := range dev.serviceMap {
+		services = append(services, service)
+	}
+	return services
 }
 
 // String returns a string representation of the device.
