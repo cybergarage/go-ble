@@ -73,6 +73,17 @@ func (dev *tinyDevice) RSSI() int {
 	return int(dev.scanResult.RSSI)
 }
 
+// LookupService looks up a Bluetooth service by its UUID.
+func (dev *tinyDevice) LookupService(uuid UUID) (Service, bool) {
+	services := dev.Services()
+	for _, s := range services {
+		if s.UUID().Equal(uuid) {
+			return s, true
+		}
+	}
+	return nil, false
+}
+
 // Services returns the Bluetooth services of the device.
 func (dev *tinyDevice) Services() []Service {
 	if dev.services == nil {
