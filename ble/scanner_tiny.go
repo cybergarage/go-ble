@@ -16,6 +16,7 @@ package ble
 
 import (
 	"context"
+	"time"
 
 	"tinygo.org/x/bluetooth"
 )
@@ -23,11 +24,14 @@ import (
 var adapter = bluetooth.DefaultAdapter
 
 type tinyScanner struct {
+	devices map[UUID]*tinyDevice
 }
 
 // NewScanner creates a new Bluetooth scanner.
 func NewScanner() Scanner {
-	return &tinyScanner{}
+	return &tinyScanner{
+		devices: map[UUID]*tinyDevice{},
+	}
 }
 
 // Scan starts scanning for Bluetooth devices.
@@ -42,7 +46,22 @@ func (s *tinyScanner) Scan(ctx context.Context, onResult OnScanResult) error {
 			adapter.StopScan()
 			return
 		default:
-			onResult(newDeviceFromScanResult(scanRes))
+			now := time.Now()
+			scanDev := newDeviceFromScanResult(scanRes)
+			foundDev, ok := s.devices[UUID(scanDev.Address())]
+			if ok {
+				foundDev.lastSeenAt = now
+				for _, scanService := range scanDev.Services() {
+					if _, ok := foundDev.LookupService(scanService.UUID()); !ok {
+						foundDev.serviceMap[scanService.UUID()] = scanService
+						foundDev.modifiedAt = now
+					}
+				}
+			} else {
+				s.devices[UUID(scanDev.Address())] = scanDev
+				foundDev = scanDev
+			}
+			onResult(foundDev)
 		}
 	})
 	return err
