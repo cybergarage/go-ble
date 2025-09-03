@@ -33,7 +33,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	err = c.Scan(ctx, func(dev ble.Device) {
-		log.Infof("Device found: %v", dev.Address())
+		log.Infof("Device found: %s", dev.String())
 	})
 	if err != nil {
 		log.Fatalf("Failed to scan: %v", err)
