@@ -14,16 +14,10 @@
 
 package ble
 
-import (
-	"fmt"
-)
-
 // Address represents a Bluetooth address.
 type Address UUID
 
 // String returns the string representation of the Bluetooth address.
-func (a Address) String() string {
-	b := [16]byte(a)
-	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x",
-		b[10], b[11], b[12], b[13], b[14], b[15])
+func (addr Address) String() string {
+	return UUID(addr).String()
 }
