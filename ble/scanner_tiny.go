@@ -24,13 +24,13 @@ import (
 var adapter = bluetooth.DefaultAdapter
 
 type tinyScanner struct {
-	devices map[UUID]*tinyDevice
+	devices map[Address]*tinyDevice
 }
 
 // NewScanner creates a new Bluetooth scanner.
 func NewScanner() Scanner {
 	return &tinyScanner{
-		devices: map[UUID]*tinyDevice{},
+		devices: map[Address]*tinyDevice{},
 	}
 }
 
@@ -57,7 +57,7 @@ func (s *tinyScanner) Scan(ctx context.Context, onResult OnScanResult) error {
 		default:
 			now := time.Now()
 			scanDev := newDeviceFromScanResult(scanRes)
-			discoverdDev, ok := s.devices[UUID(scanDev.Address())]
+			discoverdDev, ok := s.devices[scanDev.Address()]
 			if ok {
 				discoverdDev.lastSeenAt = now
 				discoverdDev.rssi = scanDev.RSSI()
@@ -68,7 +68,7 @@ func (s *tinyScanner) Scan(ctx context.Context, onResult OnScanResult) error {
 					}
 				}
 			} else {
-				s.devices[UUID(scanDev.Address())] = scanDev
+				s.devices[scanDev.Address()] = scanDev
 				discoverdDev = scanDev
 			}
 			onResult(discoverdDev)

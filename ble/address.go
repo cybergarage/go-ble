@@ -15,9 +15,9 @@
 package ble
 
 // Address represents a Bluetooth address.
-type Address UUID
+type Address string
 
 // String returns the string representation of the Bluetooth address.
 func (addr Address) String() string {
-	return UUID(addr).String()
+	return string(addr)
 }

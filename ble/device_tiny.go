@@ -65,8 +65,7 @@ func (dev *tinyDevice) LocalName() string {
 
 // Address returns the Bluetooth address of the device.
 func (dev *tinyDevice) Address() Address {
-	scanAddr := dev.scanResult.Address.String()
-	return Address(mustUUIDFromString(scanAddr))
+	return Address(dev.scanResult.Address.String())
 }
 
 // RSSI returns the received signal strength indicator of the device.
