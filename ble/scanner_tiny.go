@@ -57,20 +57,21 @@ func (s *tinyScanner) Scan(ctx context.Context, onResult OnScanResult) error {
 		default:
 			now := time.Now()
 			scanDev := newDeviceFromScanResult(scanRes)
-			foundDev, ok := s.devices[UUID(scanDev.Address())]
+			discoverdDev, ok := s.devices[UUID(scanDev.Address())]
 			if ok {
-				foundDev.lastSeenAt = now
+				discoverdDev.lastSeenAt = now
+				discoverdDev.rssi = scanDev.RSSI()
 				for _, scanService := range scanDev.Services() {
-					if _, ok := foundDev.LookupService(scanService.UUID()); !ok {
-						foundDev.serviceMap[scanService.UUID()] = scanService
-						foundDev.modifiedAt = now
+					if _, ok := discoverdDev.LookupService(scanService.UUID()); !ok {
+						discoverdDev.serviceMap[scanService.UUID()] = scanService
+						discoverdDev.modifiedAt = now
 					}
 				}
 			} else {
 				s.devices[UUID(scanDev.Address())] = scanDev
-				foundDev = scanDev
+				discoverdDev = scanDev
 			}
-			onResult(foundDev)
+			onResult(discoverdDev)
 		}
 	})
 	return err

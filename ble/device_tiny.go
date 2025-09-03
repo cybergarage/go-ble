@@ -22,6 +22,7 @@ type tinyDevice struct {
 	*baseDevice
 	scanResult   bluetooth.ScanResult
 	manufacturer Manufacturer
+	rssi         int
 	serviceMap   map[UUID]Service
 }
 
@@ -30,6 +31,7 @@ func newDeviceFromScanResult(scanResult bluetooth.ScanResult) *tinyDevice {
 		baseDevice:   newBaseDevice(),
 		manufacturer: nil,
 		scanResult:   scanResult,
+		rssi:         int(scanResult.RSSI),
 		serviceMap:   nil,
 	}
 }
@@ -69,7 +71,7 @@ func (dev *tinyDevice) Address() Address {
 
 // RSSI returns the received signal strength indicator of the device.
 func (dev *tinyDevice) RSSI() int {
-	return int(dev.scanResult.RSSI)
+	return dev.rssi
 }
 
 // LookupService looks up a Bluetooth service by its UUID.
