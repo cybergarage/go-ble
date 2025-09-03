@@ -37,6 +37,11 @@ func mustUUIDFromBytes(b []byte) UUID {
 	return UUID(uuid.Nil)
 }
 
+// Equal checks if two UUIDs are equal.
+func (u UUID) Equal(other UUID) bool {
+	return uuid.UUID(u) == uuid.UUID(other)
+}
+
 // String returns the string representation of the UUID.
 func (u UUID) String() string {
 	return uuid.UUID(u).String()
