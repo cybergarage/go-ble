@@ -6,6 +6,6 @@
  [![Go Report Card](https://img.shields.io/badge/go%20report-A%2B-brightgreen)](https://goreportcard.com/report/github.com/cybergarage/go-ble) 
  [![codecov](https://codecov.io/gh/cybergarage/go-ble/graph/badge.svg?token=7Y64KS92VD)](https://codecov.io/gh/cybergarage/go-ble)
 
-go-ble is likely a Go (Golang) library or project focused on Bluetooth Low Energy (BLE) functionality. Here’s a breakdown based on the README snippet:
+go-ble is likely a Go (Golang) library or project focused on Bluetooth Low Energy (BLE) functionality.
 
-The project will provide tools or APIs for working with BLE devices using Go. This could include scanning for BLE devices, connecting, reading/writing characteristics, etc.
+This project is based on [tinygo.org/x/bluetooth](https://tinygo.org/x/bluetooth), a well-known Bluetooth Low Energy (BLE) library for Go. The goal of go-ble is to provide a simpler and more user-friendly interface for BLE development in Go, making it easier for developers to build BLE applications without deep knowledge of the underlying Bluetooth stack.
