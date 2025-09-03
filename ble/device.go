@@ -14,6 +14,8 @@
 
 package ble
 
+import "time"
+
 // Device represents a Bluetooth device.
 type Device interface {
 	// Manufacturer returns the Bluetooth manufacturer of the device.
@@ -28,6 +30,12 @@ type Device interface {
 	Services() []Service
 	// RSSI returns the received signal strength indicator of the device.
 	RSSI() int
+	// DiscoveredAt returns the time when the device was first discovered.
+	DiscoveredAt() time.Time
+	// ModifiedAt returns the time when the device was last modified.
+	ModifiedAt() time.Time
+	// LastSeenAt returns the time when the device was last seen.
+	LastSeenAt() time.Time
 	// String returns a string representation of the device.
 	String() string
 }

@@ -15,13 +15,11 @@
 package ble
 
 import (
-	"fmt"
-	"strings"
-
 	"tinygo.org/x/bluetooth"
 )
 
 type tinyDevice struct {
+	*baseDevice
 	scanResult   bluetooth.ScanResult
 	manufacturer Manufacturer
 	services     []Service
@@ -29,6 +27,7 @@ type tinyDevice struct {
 
 func newDeviceFromScanResult(scanResult bluetooth.ScanResult) Device {
 	return &tinyDevice{
+		baseDevice:   newBaseDevice(),
 		manufacturer: nil,
 		scanResult:   scanResult,
 		services:     nil,
@@ -75,13 +74,7 @@ func (dev *tinyDevice) RSSI() int {
 
 // LookupService looks up a Bluetooth service by its UUID.
 func (dev *tinyDevice) LookupService(uuid UUID) (Service, bool) {
-	services := dev.Services()
-	for _, s := range services {
-		if s.UUID().Equal(uuid) {
-			return s, true
-		}
-	}
-	return nil, false
+	return dev.lookupServiceFrom(dev.Services(), uuid)
 }
 
 // Services returns the Bluetooth services of the device.
@@ -103,10 +96,5 @@ func (dev *tinyDevice) Services() []Service {
 
 // String returns a string representation of the device.
 func (dev *tinyDevice) String() string {
-	services := []string{}
-	for _, s := range dev.Services() {
-		services = append(services, s.String())
-	}
-	return fmt.Sprintf("Device[Address: %s, LocalName: %s, Manufacturer: %s, RSSI: %d, Services: (%s)]",
-		dev.Address(), dev.LocalName(), dev.Manufacturer().String(), dev.RSSI(), strings.Join(services, ", "))
+	return dev.StringFrom(dev)
 }
