@@ -15,6 +15,8 @@
 package ble
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 )
 
@@ -44,5 +46,5 @@ func (u UUID) Equal(other UUID) bool {
 
 // String returns the string representation of the UUID.
 func (u UUID) String() string {
-	return uuid.UUID(u).String()
+	return strings.ToUpper(uuid.UUID(u).String())
 }
