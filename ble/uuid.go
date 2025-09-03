@@ -39,6 +39,22 @@ func mustUUIDFromBytes(b []byte) UUID {
 	return UUID(uuid.Nil)
 }
 
+func newUUIDFromString(s string) (UUID, error) {
+	addr, err := uuid.Parse(s)
+	if err != nil {
+		return UUID{}, err
+	}
+	return UUID(addr), nil
+}
+
+func mustUUIDFromString(s string) UUID {
+	addr, err := newUUIDFromString(s)
+	if err == nil {
+		return addr
+	}
+	return UUID(uuid.Nil)
+}
+
 // Equal checks if two UUIDs are equal.
 func (u UUID) Equal(other UUID) bool {
 	return uuid.UUID(u) == uuid.UUID(other)
