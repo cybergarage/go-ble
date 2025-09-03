@@ -37,4 +37,9 @@ func TestScanner(t *testing.T) {
 	if err != nil {
 		log.Errorf("Failed to scan: %v", err)
 	}
+
+	log.Infof("Discovered devices:")
+	for n, dev := range scanner.Devices() {
+		log.Infof("[%d] %s", n, dev.String())
+	}
 }

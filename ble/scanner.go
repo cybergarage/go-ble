@@ -23,5 +23,8 @@ type OnScanResult func(Device)
 
 // Scanner defines the interface for a Bluetooth scanner.
 type Scanner interface {
+	// Devices returns the list of discovered devices.
+	Devices() []Device
+	// Scan starts scanning for Bluetooth devices.
 	Scan(ctx context.Context, onResult OnScanResult) error
 }

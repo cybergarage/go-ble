@@ -34,6 +34,15 @@ func NewScanner() Scanner {
 	}
 }
 
+// Devices returns the list of discovered devices.
+func (s *tinyScanner) Devices() []Device {
+	devs := make([]Device, 0, len(s.devices))
+	for _, dev := range s.devices {
+		devs = append(devs, dev)
+	}
+	return devs
+}
+
 // Scan starts scanning for Bluetooth devices.
 func (s *tinyScanner) Scan(ctx context.Context, onResult OnScanResult) error {
 	err := adapter.Enable()

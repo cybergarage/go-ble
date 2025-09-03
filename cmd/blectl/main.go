@@ -25,17 +25,22 @@ import (
 func main() {
 	log.EnableStdoutDebug(true)
 
-	c, err := ble.NewCentral()
+	central, err := ble.NewCentral()
 	if err != nil {
 		log.Fatalf("Failed to create central: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err = c.Scan(ctx, func(dev ble.Device) {
+	err = central.Scan(ctx, func(dev ble.Device) {
 		log.Infof("Device found: %s", dev.String())
 	})
 	if err != nil {
 		log.Fatalf("Failed to scan: %v", err)
+	}
+
+	log.Infof("Discovered devices:")
+	for n, dev := range central.Devices() {
+		log.Infof("[%d] %s", n, dev.String())
 	}
 }
