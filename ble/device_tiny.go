@@ -104,13 +104,9 @@ func (dev *tinyDevice) Services() []Service {
 }
 
 func (dev *tinyDevice) MarshalObject() any {
-	services := []any{}
-	for _, v := range dev.Services() {
-		service, ok := v.(*service)
-		if !ok {
-			continue
-		}
-		services = append(services, service.MarshalObject())
+	serviceObjs := []any{}
+	for _, service := range dev.Services() {
+		serviceObjs = append(serviceObjs, service.MarshalObject())
 	}
 	return struct {
 		Address      Address      `json:"address"`
@@ -126,7 +122,7 @@ func (dev *tinyDevice) MarshalObject() any {
 		LocalName:    dev.LocalName(),
 		Manufacturer: dev.Manufacturer(),
 		RSSI:         dev.RSSI(),
-		Services:     services,
+		Services:     serviceObjs,
 		DiscoveredAt: dev.discoveredAt.Format(time.RFC3339),
 		ModifiedAt:   dev.modifiedAt.Format(time.RFC3339),
 		LastSeenAt:   dev.lastSeenAt.Format(time.RFC3339),

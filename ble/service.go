@@ -16,7 +16,7 @@ package ble
 
 import (
 	"encoding/hex"
-	"fmt"
+	"encoding/json"
 )
 
 // Service represents a Bluetooth service.
@@ -27,6 +27,8 @@ type Service interface {
 	Name() string
 	// Data returns the data of the service.
 	Data() []byte
+	// MarshalObject returns an object suitable for marshaling to JSON.
+	MarshalObject() any
 	// String returns a string representation of the service.
 	String() string
 }
@@ -75,5 +77,9 @@ func (s *service) MarshalObject() any {
 
 // String returns a string representation of the service.
 func (s *service) String() string {
-	return fmt.Sprintf("Service[UUID: %s, Name: %s, Data: %v]", s.uuid, s.name, hex.EncodeToString(s.data))
+	b, err := json.Marshal(s.MarshalObject())
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
 }
