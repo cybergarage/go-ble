@@ -37,7 +37,7 @@ type service struct {
 	data []byte
 }
 
-func newService(uuid UUID, name string, data []byte) Service {
+func newService(uuid UUID, name string, data []byte) *service {
 	return &service{
 		uuid: uuid,
 		name: name,
@@ -58,6 +58,19 @@ func (s *service) Name() string {
 // Data returns the data of the service.
 func (s *service) Data() []byte {
 	return s.data
+}
+
+// MarshalObject returns an object suitable for marshaling to JSON.
+func (s *service) MarshalObject() any {
+	return struct {
+		UUID UUID   `json:"uuid"`
+		Name string `json:"name"`
+		Data string `json:"data"`
+	}{
+		UUID: s.uuid,
+		Name: s.name,
+		Data: hex.EncodeToString(s.data),
+	}
 }
 
 // String returns a string representation of the service.
