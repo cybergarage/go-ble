@@ -18,6 +18,8 @@ import (
 	"context"
 )
 
+type ScannerOption any
+
 // OnScanResult is the callback function type for scan results.
 type OnScanResult func(Device)
 
@@ -26,5 +28,5 @@ type Scanner interface {
 	// Devices returns the list of discovered devices.
 	Devices() []Device
 	// Scan starts scanning for Bluetooth devices.
-	Scan(ctx context.Context, onResult OnScanResult) error
+	Scan(ctx context.Context, opts ...ScannerOption) error
 }
