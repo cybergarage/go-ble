@@ -15,52 +15,48 @@
 package ble
 
 import (
+	"fmt"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 // UUID represents a Bluetooth UUID.
-type UUID uuid.UUID
+type UUID [4]uint32
 
-func newUUIDFromBytes(b []byte) (UUID, error) {
-	addr, err := uuid.FromBytes(b)
-	if err != nil {
-		return UUID{}, err
-	}
-	return UUID(addr), nil
-}
-
-func mustUUIDFromBytes(b []byte) UUID {
-	addr, err := newUUIDFromBytes(b)
-	if err == nil {
-		return addr
-	}
-	return UUID(uuid.Nil)
-}
-
-func newUUIDFromString(s string) (UUID, error) {
-	addr, err := uuid.Parse(s)
-	if err != nil {
-		return UUID{}, err
-	}
-	return UUID(addr), nil
-}
-
-func mustUUIDFromString(s string) UUID {
-	addr, err := newUUIDFromString(s)
-	if err == nil {
-		return addr
-	}
-	return UUID(uuid.Nil)
-}
+var baseUUID = UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x00000000}
 
 // Equal checks if two UUIDs are equal.
 func (u UUID) Equal(other UUID) bool {
-	return uuid.UUID(u) == uuid.UUID(other)
+	return u == other
+}
+
+// IsUUID32 checks if the UUID is a 32-bit UUID.
+func (u UUID) IsUUID32() bool {
+	return u[1] == baseUUID[1] && u[2] == baseUUID[2] && u[3] == baseUUID[3]
+}
+
+// IsUUID16 checks if the UUID is a 16-bit UUID.
+func (u UUID) IsUUID16() bool {
+	return u.IsUUID32() && (u[3] == uint32(uint16(u[3])))
+}
+
+// Bytes returns the byte representation of the UUID in big-endian format.
+func (u UUID) Bytes() []byte {
+	bytes := make([]byte, 16)
+	for i := range u {
+		bytes[i*4+0] = byte(u[i] >> 24)
+		bytes[i*4+1] = byte(u[i] >> 16)
+		bytes[i*4+2] = byte(u[i] >> 8)
+		bytes[i*4+3] = byte(u[i] >> 0)
+	}
+	return bytes
 }
 
 // String returns the string representation of the UUID.
 func (u UUID) String() string {
-	return strings.ToUpper(uuid.UUID(u).String())
+	b := u.Bytes()
+	return strings.ToUpper(
+		fmt.Sprintf("%X-%X-%X-%X-%X",
+			b[0:4], b[4:6], b[6:8], b[8:10], b[10:16],
+		),
+	)
 }
