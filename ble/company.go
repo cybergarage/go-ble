@@ -29,7 +29,7 @@ type Company interface {
 }
 
 type company struct {
-	Value int    `yaml:"id"`
+	Value int    `yaml:"value"`
 	Nam   string `yaml:"name"`
 }
 
