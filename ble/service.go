@@ -65,11 +65,11 @@ func (s *service) Data() []byte {
 // MarshalObject returns an object suitable for marshaling to JSON.
 func (s *service) MarshalObject() any {
 	return struct {
-		UUID UUID   `json:"uuid"`
+		UUID string `json:"uuid"`
 		Name string `json:"name"`
 		Data string `json:"data"`
 	}{
-		UUID: s.uuid,
+		UUID: s.uuid.String(),
 		Name: s.name,
 		Data: hex.EncodeToString(s.data),
 	}
