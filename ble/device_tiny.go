@@ -91,9 +91,19 @@ func (dev *tinyDevice) Services() []Service {
 	if dev.serviceMap == nil {
 		dev.serviceMap = make(map[UUID]Service)
 		for _, sd := range dev.scanResult.ServiceData() {
-			uuidBytes := sd.UUID.Bytes()
+			// Convert bluetooth.UUID (uint32[4]) to [16]byte in big-endian order
+			uuidBytesFrom := func(from [4]uint32) []byte {
+				var uuidBytes [16]byte
+				for i, u := range from {
+					uuidBytes[i*4+0] = byte(u >> 24)
+					uuidBytes[i*4+1] = byte(u >> 16)
+					uuidBytes[i*4+2] = byte(u >> 8)
+					uuidBytes[i*4+3] = byte(u)
+				}
+				return uuidBytes[:]
+			}
 			service := newService(
-				mustUUIDFromBytes(uuidBytes[:]),
+				mustUUIDFromBytes(uuidBytesFrom(sd.UUID)),
 				"",
 				sd.Data,
 			)
