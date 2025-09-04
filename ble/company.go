@@ -14,7 +14,7 @@
 
 package ble
 
-import "fmt"
+import "encoding/json"
 
 // Company represents a Bluetooth company.
 type Company interface {
@@ -22,12 +22,14 @@ type Company interface {
 	ID() int
 	// Name returns the company name.
 	Name() string
+	// MarshalObject returns an object suitable for marshaling to JSON.
+	MarshalObject() any
 	// String returns a string representation of the company.
 	String() string
 }
 
 type company struct {
-	Value int    `yaml:"value"`
+	Value int    `yaml:"id"`
 	Nam   string `yaml:"name"`
 }
 
@@ -46,7 +48,16 @@ func (c *company) Name() string {
 	return c.Nam
 }
 
+// MarshalObject returns an object suitable for marshaling to JSON.
+func (c *company) MarshalObject() any {
+	return c
+}
+
 // String returns a string representation of the company.
 func (c *company) String() string {
-	return fmt.Sprintf("Company(ID: %d, Name: %s)", c.Value, c.Nam)
+	b, err := json.Marshal(c.MarshalObject())
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
 }
