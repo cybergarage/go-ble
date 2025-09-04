@@ -16,7 +16,7 @@ package ble
 
 import (
 	"encoding/hex"
-	"fmt"
+	"encoding/json"
 )
 
 // Manufacturer represents a Bluetooth manufacturer.
@@ -25,6 +25,8 @@ type Manufacturer interface {
 	Company() Company
 	// Data returns the manufacturer specific data.
 	Data() []byte
+	// MarshalObject returns an object suitable for marshaling to JSON.
+	MarshalObject() any
 	// String returns a string representation of the manufacturer.
 	String() string
 }
@@ -62,7 +64,24 @@ func (m *manufacturer) Data() []byte {
 	return m.data
 }
 
+// MarshalObject returns an object suitable for marshaling to JSON.
+func (m *manufacturer) MarshalObject() any {
+	return struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+		Data string `json:"data"`
+	}{
+		ID:   m.company.ID(),
+		Name: m.company.Name(),
+		Data: hex.EncodeToString(m.data),
+	}
+}
+
 // String returns a string representation of the manufacturer.
 func (m *manufacturer) String() string {
-	return fmt.Sprintf("%s, Data: %x)", m.company.String(), hex.EncodeToString(m.data))
+	b, err := json.Marshal(m.MarshalObject())
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
 }
