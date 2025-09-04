@@ -15,6 +15,9 @@
 package ble
 
 import (
+	"encoding/json"
+	"time"
+
 	"tinygo.org/x/bluetooth"
 )
 
@@ -100,7 +103,41 @@ func (dev *tinyDevice) Services() []Service {
 	return services
 }
 
+func (dev *tinyDevice) MarshalObject() any {
+	services := []any{}
+	for _, v := range dev.Services() {
+		service, ok := v.(*service)
+		if !ok {
+			continue
+		}
+		services = append(services, service.MarshalObject())
+	}
+	return struct {
+		Address      Address      `json:"address"`
+		LocalName    string       `json:"localName"`
+		Manufacturer Manufacturer `json:"manufacturer"`
+		RSSI         int          `json:"rssi"`
+		Services     []any        `json:"services"`
+		DiscoveredAt string       `json:"discoveredAt"`
+		ModifiedAt   string       `json:"modifiedAt"`
+		LastSeenAt   string       `json:"lastSeenAt"`
+	}{
+		Address:      dev.Address(),
+		LocalName:    dev.LocalName(),
+		Manufacturer: dev.Manufacturer(),
+		RSSI:         dev.RSSI(),
+		Services:     services,
+		DiscoveredAt: dev.discoveredAt.Format(time.RFC3339),
+		ModifiedAt:   dev.modifiedAt.Format(time.RFC3339),
+		LastSeenAt:   dev.lastSeenAt.Format(time.RFC3339),
+	}
+}
+
 // String returns a string representation of the device.
 func (dev *tinyDevice) String() string {
-	return dev.StringFrom(dev)
+	b, err := json.Marshal(dev.MarshalObject())
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
 }
