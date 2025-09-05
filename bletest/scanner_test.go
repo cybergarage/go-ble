@@ -31,9 +31,9 @@ func TestScanner(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := scanner.Scan(ctx,
-		func(dev ble.Device) {
+		ble.OnScanResult(func(dev ble.Device) {
 			log.Infof("Device found: dev=%s", dev.String())
-		})
+		}))
 	if err != nil {
 		log.Errorf("Failed to scan: %v", err)
 	}

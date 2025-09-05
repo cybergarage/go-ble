@@ -45,11 +45,11 @@ func (s *tinyScanner) Devices() []Device {
 
 // Scan starts scanning for Bluetooth devices.
 func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
-	var onScanResultlistener OnScanResult
+	onScanResults := []OnScanResult{}
 	for _, opt := range opts {
 		switch v := opt.(type) {
 		case OnScanResult:
-			onScanResultlistener = v
+			onScanResults = append(onScanResults, v)
 		}
 	}
 	err := adapter.Enable()
@@ -78,8 +78,9 @@ func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 				s.devices[scanDev.Address()] = scanDev
 				discoverdDev = scanDev
 			}
-			if onScanResultlistener != nil {
-				onScanResultlistener(discoverdDev)
+
+			for _, onScanResult := range onScanResults {
+				onScanResult(discoverdDev)
 			}
 		}
 	})
