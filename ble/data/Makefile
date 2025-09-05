@@ -23,18 +23,20 @@ AD_TYPES_URL="https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbe
 
 ${AD_TYPES_YAML}:
 	@wget -q -O ${AD_TYPES_YAML} ${AD_TYPES_URL}${AD_TYPES_YAML}
+	@git commit ${AD_TYPES_YAML} -m "feat(database): update ${AD_TYPES_YAML}" || true
 
 COMPANY_IDENTIFIERS_YAML="company_identifiers.yaml"
 COMPANY_IDENTIFIERS_URL="https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/"
 
 ${COMPANY_IDENTIFIERS_YAML}:
-	@wget -q -O ${COMPANY_IDENTIFIERS_YAML} ${COMPANY_IDENTIFIERS_URL}${COMPANY_IDENTIFIERS_YAML} 
+	@wget -q -O ${COMPANY_IDENTIFIERS_YAML} ${COMPANY_IDENTIFIERS_URL}${COMPANY_IDENTIFIERS_YAML}
+	@git commit ${COMPANY_IDENTIFIERS_YAML} -m "feat(database): update ${COMPANY_IDENTIFIERS_YAML}" || true
 
 SERVICE_UUIDS_YAML="service_uuids.yaml"
 SERVICE_UUIDS_URL="https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/uuids/"
 
 ${SERVICE_UUIDS_YAML}:
 	@wget -q -O ${SERVICE_UUIDS_YAML} ${SERVICE_UUIDS_URL}${SERVICE_UUIDS_YAML}
+	@git commit ${SERVICE_UUIDS_YAML} -m "feat(database): update ${SERVICE_UUIDS_YAML}" || true
 
 download: ${COMPANY_IDENTIFIERS_YAML} ${AD_TYPES_YAML} ${SERVICE_UUIDS_YAML}
-	@echo "Downloaded"
