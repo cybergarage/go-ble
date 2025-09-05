@@ -1,5 +1,11 @@
 company_identifiers:
 
+  - value: 0x0F66
+    name: 'BIGREDBEE, LLC'
+
+  - value: 0x0F65
+    name: 'CZV, Inc'
+
   - value: 0x0F64
     name: 'SafeNow GmbH'
 
