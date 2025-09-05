@@ -28,6 +28,7 @@ func TestUUID(t *testing.T) {
 		Is128Bit bool
 	}{
 		{"5F9B34FB-8000-0080-0000-10000000FD3D", true, false, false}, // 16-bit UUID
+		{"5F9B34FB-8000-0080-0000-10000000FFF6", true, false, false}, // 16-bit UUID
 		{"5F9B34FB-8000-0080-0000-10000001ABCD", false, true, false}, // 32-bit UUID
 		{"00000000-8000-0080-0000-10000001ABCD", false, false, true}, // 128-bit UUID
 	}
