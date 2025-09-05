@@ -20,7 +20,7 @@ import (
 	"github.com/cybergarage/go-ble/ble"
 )
 
-func TestUUID(t *testing.T) {
+func TestParseUUID(t *testing.T) {
 	tests := []struct {
 		input    string
 		Is16Bit  bool
@@ -47,6 +47,24 @@ func TestUUID(t *testing.T) {
 		}
 		if uuid.IsUUID128() != test.Is128Bit {
 			t.Errorf("Expected IsUUID128() to be %v for UUID %s, got %v", test.Is128Bit, test.input, uuid.IsUUID128())
+		}
+	}
+}
+
+func TestGenerateUUID(t *testing.T) {
+	tests := []struct {
+		uuid     ble.UUID
+		expected ble.UUID
+	}{
+		{ble.NewUUIDFromUUID16(0xFD3D), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FD3D}},
+		{ble.NewUUIDFromUUID16(0xFFF6), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FFF6}},
+		{ble.NewUUIDFromUUID32(0x01ABCD), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x001ABCD}},
+	}
+
+	for _, test := range tests {
+		result := test.uuid
+		if result != test.expected {
+			t.Errorf("Expected UUID %v, got %v", test.expected, result)
 		}
 	}
 }

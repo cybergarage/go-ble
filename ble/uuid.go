@@ -46,6 +46,26 @@ func NewUUIDFromUUIDString(s string) (UUID, error) {
 	return NewUUIDFromUUID(u), nil
 }
 
+// NewUUIDFromUUID16 creates a UUID from a 32-bit UUID.
+func NewUUIDFromUUID32(u32 uint32) UUID {
+	return UUID{
+		baseUUID[0],
+		baseUUID[1],
+		baseUUID[2],
+		u32,
+	}
+}
+
+// NewUUIDFromUUID16 creates a UUID from a 16-bit UUID.
+func NewUUIDFromUUID16(u16 uint16) UUID {
+	return UUID{
+		baseUUID[0],
+		baseUUID[1],
+		baseUUID[2],
+		uint32(u16),
+	}
+}
+
 // Equal checks if two UUIDs are equal.
 func (u UUID) Equal(other UUID) bool {
 	return u == other
