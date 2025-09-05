@@ -38,7 +38,6 @@ type Service interface {
 type service struct {
 	db.Service
 	uuid UUID
-	name string
 	data []byte
 }
 
@@ -51,7 +50,6 @@ func newService(uuid UUID, name string, data []byte) *service {
 	return &service{
 		Service: dbService,
 		uuid:    uuid,
-		name:    name,
 		data:    data,
 	}
 }
@@ -74,7 +72,7 @@ func (s *service) MarshalObject() any {
 		Data string `json:"data"`
 	}{
 		UUID: s.uuid.String(),
-		Name: s.name,
+		Name: s.Name(),
 		Data: hex.EncodeToString(s.data),
 	}
 }
