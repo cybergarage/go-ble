@@ -70,7 +70,7 @@ func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 				discoverdDev.rssi = scanDev.RSSI()
 				for _, scanService := range scanDev.Services() {
 					if _, ok := discoverdDev.LookupService(scanService.UUID()); !ok {
-						discoverdDev.serviceMap[scanService.UUID()] = scanService
+						discoverdDev.addService(scanService)
 						discoverdDev.modifiedAt = now
 					}
 				}

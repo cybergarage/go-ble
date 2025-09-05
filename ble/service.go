@@ -41,7 +41,7 @@ type service struct {
 	data []byte
 }
 
-func newService(uuid UUID, name string, data []byte) *service {
+func newService(uuid UUID, data []byte) *service {
 	uuid16, ok := uuid.UUID16()
 	if !ok {
 		uuid16 = 0x0000

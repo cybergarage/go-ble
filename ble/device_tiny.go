@@ -16,6 +16,7 @@ package ble
 
 import (
 	"encoding/json"
+	"sync"
 	"time"
 
 	"tinygo.org/x/bluetooth"
@@ -26,17 +27,21 @@ type tinyDevice struct {
 	scanResult   bluetooth.ScanResult
 	manufacturer Manufacturer
 	rssi         int
-	serviceMap   map[UUID]Service
+	serviceMap   sync.Map
 }
 
 func newDeviceFromScanResult(scanResult bluetooth.ScanResult) *tinyDevice {
-	return &tinyDevice{
+	dev := &tinyDevice{
 		baseDevice:   newBaseDevice(),
 		manufacturer: nil,
 		scanResult:   scanResult,
 		rssi:         int(scanResult.RSSI),
-		serviceMap:   nil,
+		serviceMap:   sync.Map{},
 	}
+	for _, sd := range scanResult.ServiceData() {
+		dev.addServiceDataElement(sd)
+	}
+	return dev
 }
 
 // Manufacturer returns the Bluetooth manufacturer of the device.
@@ -83,23 +88,28 @@ func (dev *tinyDevice) LookupService(uuid UUID) (Service, bool) {
 	return nil, false
 }
 
+func (dev *tinyDevice) addServiceDataElement(sd bluetooth.ServiceDataElement) {
+	service := newService(
+		UUID(sd.UUID),
+		sd.Data,
+	)
+	dev.addService(service)
+}
+
+func (dev *tinyDevice) addService(service Service) {
+	dev.serviceMap.Store(service.UUID(), service)
+}
+
 // Services returns the Bluetooth services of the device.
 func (dev *tinyDevice) Services() []Service {
-	if dev.serviceMap == nil {
-		dev.serviceMap = make(map[UUID]Service)
-		for _, sd := range dev.scanResult.ServiceData() {
-			service := newService(
-				UUID(sd.UUID),
-				"",
-				sd.Data,
-			)
-			dev.serviceMap[service.UUID()] = service
+	services := make([]Service, 0)
+	dev.serviceMap.Range(func(key, value any) bool {
+		service, ok := value.(Service)
+		if ok {
+			services = append(services, service)
 		}
-	}
-	services := make([]Service, 0, len(dev.serviceMap))
-	for _, service := range dev.serviceMap {
-		services = append(services, service)
-	}
+		return true
+	})
 	return services
 }
 
