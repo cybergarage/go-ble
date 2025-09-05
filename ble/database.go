@@ -15,53 +15,10 @@
 package ble
 
 import (
-	_ "embed"
-
-	"gopkg.in/yaml.v2"
+	"github.com/cybergarage/go-ble/ble/db"
 )
 
-// Assigned Numbers | Bluetooth® Technology Website
-// https://www.bluetooth.com/specifications/assigned-numbers/
-//
-//go:embed data/company_identifiers.yaml
-var companyIdentifiers []byte
-
-type Database interface {
-	// LookupCompany looks up a company by its ID.
-	LookupCompany(id int) (Company, bool)
-}
-
-var sharedDatabase *database
-
-func init() {
-	var companies companies
-	err := yaml.Unmarshal(companyIdentifiers, &companies)
-	if err != nil {
-		panic(err)
-	}
-	sharedDatabase = &database{
-		companies: companies.Companies,
-	}
-}
-
 // DefaultDatabase returns the default database instance.
-func DefaultDatabase() Database {
-	return sharedDatabase
-}
-
-type database struct {
-	companies []*company
-}
-
-// LookupCompany looks up a company by its ID.
-func (db *database) LookupCompany(id int) (Company, bool) {
-	for _, company := range db.companies {
-		if company.ID() == id {
-			return company, true
-		}
-	}
-	return &company{
-		Value: id,
-		Nam:   "",
-	}, false
+func DefaultDatabase() db.Database {
+	return db.DefaultDatabase()
 }

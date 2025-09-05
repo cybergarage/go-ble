@@ -32,11 +32,14 @@ ${COMPANY_IDENTIFIERS_YAML}:
 	@wget -q -O ${COMPANY_IDENTIFIERS_YAML} ${COMPANY_IDENTIFIERS_URL}${COMPANY_IDENTIFIERS_YAML}
 	@git commit ${COMPANY_IDENTIFIERS_YAML} -m "feat(database): update ${COMPANY_IDENTIFIERS_YAML}" || true
 
-SERVICE_UUIDS_YAML="service_uuids.yaml"
 SERVICE_UUIDS_URL="https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/uuids/"
+SERVICE_UUIDS_YAML="service_uuids.yaml"
+SDO_UUIDS_YAML="sdo_uuids.yaml"
 
 ${SERVICE_UUIDS_YAML}:
 	@wget -q -O ${SERVICE_UUIDS_YAML} ${SERVICE_UUIDS_URL}${SERVICE_UUIDS_YAML}
+	@wget -q -O ${SDO_UUIDS_YAML} ${SERVICE_UUIDS_URL}${SDO_UUIDS_YAML}
 	@git commit ${SERVICE_UUIDS_YAML} -m "feat(database): update ${SERVICE_UUIDS_YAML}" || true
+	@git commit ${SDO_UUIDS_YAML} -m "feat(database): update ${SDO_UUIDS_YAML}" || true
 
 download: ${COMPANY_IDENTIFIERS_YAML} ${AD_TYPES_YAML} ${SERVICE_UUIDS_YAML}

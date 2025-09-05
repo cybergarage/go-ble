@@ -17,12 +17,16 @@ package ble
 import (
 	"encoding/hex"
 	"encoding/json"
+
+	"github.com/cybergarage/go-ble/ble/db"
 )
 
 // Manufacturer represents a Bluetooth manufacturer.
 type Manufacturer interface {
-	// Company returns the Bluetooth company information of the manufacturer.
-	Company() Company
+	// ID returns the company ID.
+	ID() int
+	// Name returns the company name.
+	Name() string
 	// Data returns the manufacturer specific data.
 	Data() []byte
 	// MarshalObject returns an object suitable for marshaling to JSON.
@@ -32,31 +36,24 @@ type Manufacturer interface {
 }
 
 type manufacturer struct {
-	company Company
-	data    []byte
+	db.Company
+	data []byte
 }
 
 func newNilManufacturer() Manufacturer {
+	company, _ := DefaultDatabase().LookupCompany(0)
 	return &manufacturer{
-		company: &company{
-			Value: 0,
-			Nam:   "Unknown",
-		},
-		data: nil,
+		Company: company,
+		data:    nil,
 	}
 }
 
 func newManufacturer(id int, data []byte) Manufacturer {
 	company, _ := DefaultDatabase().LookupCompany(id)
 	return &manufacturer{
-		company: company,
+		Company: company,
 		data:    data,
 	}
-}
-
-// Company returns the Bluetooth company information of the manufacturer.
-func (m *manufacturer) Company() Company {
-	return m.company
 }
 
 // Data returns the manufacturer specific data.
@@ -71,8 +68,8 @@ func (m *manufacturer) MarshalObject() any {
 		Name string `json:"name"`
 		Data string `json:"data"`
 	}{
-		ID:   m.company.ID(),
-		Name: m.company.Name(),
+		ID:   m.ID(),
+		Name: m.Name(),
 		Data: hex.EncodeToString(m.data),
 	}
 }

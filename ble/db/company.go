@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ble
-
-import "encoding/json"
+package db
 
 // Company represents a Bluetooth company.
 type Company interface {
@@ -22,10 +20,6 @@ type Company interface {
 	ID() int
 	// Name returns the company name.
 	Name() string
-	// MarshalObject returns an object suitable for marshaling to JSON.
-	MarshalObject() any
-	// String returns a string representation of the company.
-	String() string
 }
 
 type company struct {
@@ -46,18 +40,4 @@ func (c *company) ID() int {
 // Name returns the company name.
 func (c *company) Name() string {
 	return c.Nam
-}
-
-// MarshalObject returns an object suitable for marshaling to JSON.
-func (c *company) MarshalObject() any {
-	return c
-}
-
-// String returns a string representation of the company.
-func (c *company) String() string {
-	b, err := json.Marshal(c.MarshalObject())
-	if err != nil {
-		return "{}"
-	}
-	return string(b)
 }

@@ -55,9 +55,6 @@ func (dev *tinyDevice) Manufacturer() Manufacturer {
 			}
 		}
 	}
-	if dev.manufacturer.Company().ID() == 2409 {
-		return dev.manufacturer
-	}
 	return dev.manufacturer
 }
 
