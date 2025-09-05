@@ -30,5 +30,11 @@ COMPANY_IDENTIFIERS_URL="https://bitbucket.org/bluetooth-SIG/public/raw/main/ass
 ${COMPANY_IDENTIFIERS_YAML}:
 	@wget -q -O ${COMPANY_IDENTIFIERS_YAML} ${COMPANY_IDENTIFIERS_URL}${COMPANY_IDENTIFIERS_YAML} 
 
-download: ${COMPANY_IDENTIFIERS_YAML} ${AD_TYPES_YAML}
+SERVICE_UUIDS_YAML="service_uuids.yaml"
+SERVICE_UUIDS_URL="https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/uuids/"
+
+${SERVICE_UUIDS_YAML}:
+	@wget -q -O ${SERVICE_UUIDS_YAML} ${SERVICE_UUIDS_URL}${SERVICE_UUIDS_YAML}
+
+download: ${COMPANY_IDENTIFIERS_YAML} ${AD_TYPES_YAML} ${SERVICE_UUIDS_YAML}
 	@echo "Downloaded"
