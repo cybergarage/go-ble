@@ -41,17 +41,6 @@ type Database interface {
 
 var sharedDatabase *database
 
-var nilCompany = &company{
-	Value: 0,
-	Nam:   "Unknown",
-}
-
-var nilService = &service{
-	Uuid: 0,
-	Nam:  "",
-	Id:   "Unknown",
-}
-
 func init() {
 	var companies companies
 	err := yaml.Unmarshal(companyIdentifiers, &companies)
@@ -100,18 +89,25 @@ type database struct {
 
 // LookupCompany looks up a company by its ID.
 func (db *database) LookupCompany(id int) (Company, bool) {
-	company, ok := db.companies[id]
+	dbCompany, ok := db.companies[id]
 	if ok {
-		return company, true
+		return dbCompany, true
 	}
-	return nilCompany, false
+	return &company{
+		Value: id,
+		Nam:   "",
+	}, false
 }
 
 // LookupService looks up a service by its UUID.
 func (db *database) LookupService(uuid uint16) (Service, bool) {
-	service, ok := db.services[uuid]
+	dbService, ok := db.services[uuid]
 	if ok {
-		return service, true
+		return dbService, true
 	}
-	return nilService, false
+	return &service{
+		Uuid: uuid,
+		Nam:  "",
+		Id:   "",
+	}, false
 }
