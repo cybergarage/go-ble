@@ -17,6 +17,8 @@ package ble
 import (
 	"encoding/hex"
 	"encoding/json"
+
+	"github.com/cybergarage/go-ble/ble/db"
 )
 
 // Service represents a Bluetooth service.
@@ -34,27 +36,29 @@ type Service interface {
 }
 
 type service struct {
+	db.Service
 	uuid UUID
 	name string
 	data []byte
 }
 
 func newService(uuid UUID, name string, data []byte) *service {
+	uuid16, ok := uuid.UUID16()
+	if !ok {
+		uuid16 = 0x0000
+	}
+	dbService, _ := db.DefaultDatabase().LookupService(uuid16)
 	return &service{
-		uuid: uuid,
-		name: name,
-		data: data,
+		Service: dbService,
+		uuid:    uuid,
+		name:    name,
+		data:    data,
 	}
 }
 
 // UUID returns the UUID of the service.
 func (s *service) UUID() UUID {
 	return s.uuid
-}
-
-// Name returns the name of the service.
-func (s *service) Name() string {
-	return s.name
 }
 
 // Data returns the data of the service.
