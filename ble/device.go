@@ -14,10 +14,23 @@
 
 package ble
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // Device represents a Bluetooth device.
 type Device interface {
+	// DeviceDescriptor returns the read-only device descriptor.
+	DeviceDescriptor
+	// DeviceOperator returns the device operator.
+	DeviceOperator
+	// String returns a string representation of the device.
+	String() string
+}
+
+// DeviceDescriptor represents a read-only Bluetooth device descriptor.
+type DeviceDescriptor interface {
 	// Manufacturer returns the Bluetooth manufacturer of the device.
 	Manufacturer() Manufacturer
 	// LocalName returns the local name of the device.
@@ -36,6 +49,14 @@ type Device interface {
 	ModifiedAt() time.Time
 	// LastSeenAt returns the time when the device was last seen.
 	LastSeenAt() time.Time
-	// String returns a string representation of the device.
-	String() string
+}
+
+// DeviceOperator represents a Bluetooth device operator.
+type DeviceOperator interface {
+	// Connect connects to the device.
+	Connect(ctx context.Context) error
+	// Disconnect disconnects from the device.
+	Disconnect() error
+	// IsConnected returns whether the device is connected.
+	IsConnected() bool
 }

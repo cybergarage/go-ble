@@ -15,6 +15,7 @@
 package ble
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
 	"time"
@@ -28,6 +29,7 @@ type tinyDevice struct {
 	manufacturer Manufacturer
 	rssi         int
 	serviceMap   sync.Map
+	tinyDev      *bluetooth.Device
 }
 
 func newDeviceFromScanResult(scanResult bluetooth.ScanResult) *tinyDevice {
@@ -37,6 +39,7 @@ func newDeviceFromScanResult(scanResult bluetooth.ScanResult) *tinyDevice {
 		scanResult:   scanResult,
 		rssi:         int(scanResult.RSSI),
 		serviceMap:   sync.Map{},
+		tinyDev:      nil,
 	}
 	for _, sd := range scanResult.ServiceData() {
 		dev.addServiceDataElement(sd)
@@ -70,7 +73,7 @@ func (dev *tinyDevice) LocalName() string {
 
 // Address returns the Bluetooth address of the device.
 func (dev *tinyDevice) Address() Address {
-	return Address(dev.scanResult.Address.String())
+	return newAddressFromTiny(dev.scanResult.Address)
 }
 
 // RSSI returns the received signal strength indicator of the device.
@@ -111,6 +114,36 @@ func (dev *tinyDevice) Services() []Service {
 		return true
 	})
 	return services
+}
+
+// Connect connects to the device.
+func (dev *tinyDevice) Connect(ctx context.Context) error {
+	adapter := defaultAdapter()
+	bleAddr := addressToTiny(dev.Address())
+	tinyDev, err := adapter.Connect(bleAddr, bluetooth.ConnectionParams{})
+	if err != nil {
+		return err
+	}
+	dev.tinyDev = &tinyDev
+	return nil
+}
+
+// Disconnect disconnects from the device.
+func (dev *tinyDevice) Disconnect() error {
+	if dev.tinyDev == nil {
+		return nil
+	}
+	err := dev.tinyDev.Disconnect()
+	if err != nil {
+		return err
+	}
+	dev.tinyDev = nil
+	return nil
+}
+
+// IsConnected returns whether the device is connected.
+func (dev *tinyDevice) IsConnected() bool {
+	return dev.tinyDev != nil
 }
 
 func (dev *tinyDevice) MarshalObject() any {
