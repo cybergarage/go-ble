@@ -103,8 +103,8 @@ func (u UUID) UUID32() (uint32, bool) {
 }
 
 // Bytes returns the byte representation of the UUID in big-endian format.
-func (u UUID) Bytes() []byte {
-	bytes := make([]byte, 16)
+func (u UUID) Bytes() [16]byte {
+	var bytes [16]byte
 	for i := range u {
 		bytes[i*4+0] = byte(u[i] >> 24)
 		bytes[i*4+1] = byte(u[i] >> 16)
