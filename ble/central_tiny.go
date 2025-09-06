@@ -14,6 +14,10 @@
 
 package ble
 
+import (
+	"context"
+)
+
 type tinyCentral struct {
 	Scanner
 }
@@ -23,4 +27,9 @@ func NewCentral() (Central, error) {
 	return &tinyCentral{
 		Scanner: NewScanner(),
 	}, nil
+}
+
+// Connect connects to the specified device.
+func (c *tinyCentral) Connect(ctx context.Context, dev Device) error {
+	return dev.Connect(ctx)
 }

@@ -14,7 +14,13 @@
 
 package ble
 
+import (
+	"context"
+)
+
 // Central represents a Bluetooth central device.
 type Central interface {
 	Scanner
+	// Connect connects to the specified device.
+	Connect(ctx context.Context, dev Device) error
 }
