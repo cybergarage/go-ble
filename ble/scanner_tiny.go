@@ -21,8 +21,6 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-var adapter = bluetooth.DefaultAdapter
-
 type tinyScanner struct {
 	devices map[Address]*tinyDevice
 }
@@ -52,11 +50,11 @@ func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 			onScanResults = append(onScanResults, v)
 		}
 	}
-	err := adapter.Enable()
+	err := defaultAdapter().Enable()
 	if err != nil {
 		return err
 	}
-	err = adapter.Scan(func(adapter *bluetooth.Adapter, scanRes bluetooth.ScanResult) {
+	err = defaultAdapter().Scan(func(adapter *bluetooth.Adapter, scanRes bluetooth.ScanResult) {
 		select {
 		case <-ctx.Done():
 			adapter.StopScan()
