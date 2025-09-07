@@ -1,5 +1,20 @@
 company_identifiers:
 
+  - value: 0x0F6B
+    name: 'Skywalk Inc.'
+
+  - value: 0x0F6A
+    name: 'Roam Devices LLC'
+
+  - value: 0x0F69
+    name: 'Ancoe Industry Corporation'
+
+  - value: 0x0F68
+    name: 'Navico'
+
+  - value: 0x0F67
+    name: 'White Eagle Sonic Technologies, Inc.'
+
   - value: 0x0F66
     name: 'BIGREDBEE, LLC'
 
