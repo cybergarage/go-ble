@@ -73,7 +73,8 @@ func (dev *tinyDevice) LocalName() string {
 
 // Address returns the Bluetooth address of the device.
 func (dev *tinyDevice) Address() Address {
-	return newAddressFromTiny(dev.scanResult.Address)
+	addr, _ := newAddressFromTiny(dev.scanResult.Address)
+	return addr
 }
 
 // RSSI returns the received signal strength indicator of the device.
@@ -119,8 +120,11 @@ func (dev *tinyDevice) Services() []Service {
 // Connect connects to the device.
 func (dev *tinyDevice) Connect(ctx context.Context) error {
 	adapter := defaultAdapter()
-	bleAddr := addressToTiny(dev.Address())
-	tinyDev, err := adapter.Connect(bleAddr, bluetooth.ConnectionParams{})
+	tinyAddr, err := addressToTiny(dev.Address())
+	if err != nil {
+		return err
+	}
+	tinyDev, err := adapter.Connect(tinyAddr, bluetooth.ConnectionParams{})
 	if err != nil {
 		return err
 	}

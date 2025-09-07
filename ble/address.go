@@ -14,5 +14,14 @@
 
 package ble
 
+import (
+	"encoding/hex"
+)
+
 // Address represents a Bluetooth address.
-type Address = UUID
+type Address []byte
+
+// String returns the string representation of the Bluetooth address.
+func (addr Address) String() string {
+	return hex.EncodeToString(addr)
+}

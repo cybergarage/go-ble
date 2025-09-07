@@ -18,22 +18,19 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-func newAddressFromTiny(bleAddr bluetooth.Address) Address {
-	return Address{
-		bleAddr.UUID[0],
-		bleAddr.UUID[1],
-		bleAddr.UUID[2],
-		bleAddr.UUID[3],
+func newAddressFromTiny(tinyAddr bluetooth.Address) (Address, error) {
+	b, err := tinyAddr.MarshalBinary()
+	if err != nil {
+		return Address{}, err
 	}
+	return b, nil
 }
 
-func addressToTiny(addr Address) bluetooth.Address {
-	return bluetooth.Address{
-		UUID: bluetooth.UUID{
-			addr[0],
-			addr[1],
-			addr[2],
-			addr[3],
-		},
+func addressToTiny(addr Address) (bluetooth.Address, error) {
+	tinyAddr := bluetooth.Address{}
+	err := tinyAddr.UnmarshalBinary(addr)
+	if err != nil {
+		return bluetooth.Address{}, err
 	}
+	return tinyAddr, nil
 }

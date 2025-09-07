@@ -22,13 +22,13 @@ import (
 )
 
 type tinyScanner struct {
-	devices map[Address]*tinyDevice
+	devices map[string]*tinyDevice
 }
 
 // NewScanner creates a new Bluetooth scanner.
 func NewScanner() Scanner {
 	return &tinyScanner{
-		devices: map[Address]*tinyDevice{},
+		devices: map[string]*tinyDevice{},
 	}
 }
 
@@ -61,8 +61,9 @@ func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 			return
 		default:
 			now := time.Now()
+			addrKey := scanRes.Address.String()
 			scanDev := newDeviceFromScanResult(scanRes)
-			discoverdDev, ok := s.devices[scanDev.Address()]
+			discoverdDev, ok := s.devices[addrKey]
 			if ok {
 				discoverdDev.lastSeenAt = now
 				discoverdDev.rssi = scanDev.RSSI()
@@ -73,7 +74,7 @@ func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 					}
 				}
 			} else {
-				s.devices[scanDev.Address()] = scanDev
+				s.devices[addrKey] = scanDev
 				discoverdDev = scanDev
 			}
 
