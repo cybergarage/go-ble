@@ -86,6 +86,11 @@ func (s *service) Characteristics() []Characteristic {
 	return chars
 }
 
+// addDeviceCharacteristic adds a characteristic to the service.
+func (s *service) addDeviceCharacteristic(char Characteristic) {
+	s.charMap.Store(char.UUID(), char)
+}
+
 // MarshalObject returns an object suitable for marshaling to JSON.
 func (s *service) MarshalObject() any {
 	charObjs := make([]any, 0)

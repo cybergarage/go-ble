@@ -23,7 +23,7 @@ import (
 // Characteristic represents a Bluetooth Characteristic.
 type Characteristic interface {
 	// UUID returns the Characteristic UUID.
-	UUID() uint16
+	UUID() UUID
 	// Name returns the Characteristic name.
 	Name() string
 	// ID returns the Characteristic ID.
@@ -36,13 +36,17 @@ type Characteristic interface {
 
 // nolint: staticcheck
 type characteristic struct {
-	Uuid uint16 `yaml:"uuid"`
+	Uuid UUID   `yaml:"uuid"`
 	Nam  string `yaml:"name"`
 	Id   string `yaml:"id"`
 }
 
-func newCharacteristic(uuid uint16) *characteristic {
-	dbChar, _ := db.DefaultDatabase().LookupCharacteristic(uuid)
+func newCharacteristic(uuid UUID) *characteristic {
+	uuid16, ok := uuid.UUID16()
+	if !ok {
+		uuid16 = 0x0000
+	}
+	dbChar, _ := db.DefaultDatabase().LookupCharacteristic(uuid16)
 	return &characteristic{
 		Uuid: uuid,
 		Nam:  dbChar.Name(),
@@ -56,7 +60,7 @@ type characteristics struct {
 }
 
 // UUID returns the Characteristic UUID.
-func (char *characteristic) UUID() uint16 {
+func (char *characteristic) UUID() UUID {
 	return char.Uuid
 }
 
@@ -72,11 +76,11 @@ func (char *characteristic) ID() string {
 
 func (char *characteristic) MarshalObject() any {
 	return struct {
-		UUID uint16 `json:"uuid"`
+		UUID string `json:"uuid"`
 		Name string `json:"name"`
 		ID   string `json:"id"`
 	}{
-		UUID: char.UUID(),
+		UUID: char.UUID().String(),
 		Name: char.Name(),
 		ID:   char.ID(),
 	}

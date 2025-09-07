@@ -28,7 +28,7 @@ type tinyDevice struct {
 	scanResult   bluetooth.ScanResult
 	manufacturer Manufacturer
 	rssi         int
-	serviceMap   sync.Map
+	adServiceMap sync.Map
 	tinyDev      *bluetooth.Device
 }
 
@@ -38,7 +38,7 @@ func newDeviceFromScanResult(scanResult bluetooth.ScanResult) *tinyDevice {
 		manufacturer: nil,
 		scanResult:   scanResult,
 		rssi:         int(scanResult.RSSI),
-		serviceMap:   sync.Map{},
+		adServiceMap: sync.Map{},
 		tinyDev:      nil,
 	}
 	for _, sd := range scanResult.ServiceData() {
@@ -82,16 +82,20 @@ func (dev *tinyDevice) RSSI() int {
 	return dev.rssi
 }
 
+func (dev *tinyDevice) lookupAdvertisedService(lookupUUID UUID) (Service, bool) {
+	for _, service := range dev.Services() {
+		if lookupUUID.Equal(service.UUID()) {
+			return service, true
+		}
+	}
+	return nil, false
+}
+
 // LookupService looks up a Bluetooth service by its UUID.
 func (dev *tinyDevice) LookupService(lookupUUID UUID) (Service, bool) {
 	// If not connected, look up in the cached services.
 	if !dev.IsConnected() {
-		for _, service := range dev.Services() {
-			if lookupUUID.Equal(service.UUID()) {
-				return service, true
-			}
-		}
-		return nil, false
+		return dev.lookupAdvertisedService(lookupUUID)
 	}
 
 	// If connected, discover services from the device using the Bluetooth API.
@@ -102,11 +106,26 @@ func (dev *tinyDevice) LookupService(lookupUUID UUID) (Service, bool) {
 	for _, tinyService := range tinyServices {
 		tinyServiceUUID := UUID(tinyService.UUID())
 		if lookupUUID.Equal(tinyServiceUUID) {
+			tinyChars, err := tinyService.DiscoverCharacteristics(nil)
+			if err != nil {
+				return nil, false
+			}
+			adData := []byte{}
+			adService, ok := dev.lookupAdvertisedService(lookupUUID)
+			if ok {
+				adData = adService.Data()
+			}
 			service := newService(
 				UUID(tinyService.UUID()),
-				[]byte{},
+				adData,
 				[]Characteristic{},
 			)
+			for _, tinyChar := range tinyChars {
+				char := newCharacteristic(
+					UUID(tinyChar.UUID()),
+				)
+				service.addDeviceCharacteristic(char)
+			}
 			return service, true
 		}
 	}
@@ -123,13 +142,13 @@ func (dev *tinyDevice) addServiceDataElement(sd bluetooth.ServiceDataElement) {
 }
 
 func (dev *tinyDevice) addService(service Service) {
-	dev.serviceMap.Store(service.UUID(), service)
+	dev.adServiceMap.Store(service.UUID(), service)
 }
 
 // Services returns the Bluetooth services of the device.
 func (dev *tinyDevice) Services() []Service {
 	services := make([]Service, 0)
-	dev.serviceMap.Range(func(key, value any) bool {
+	dev.adServiceMap.Range(func(key, value any) bool {
 		service, ok := value.(Service)
 		if ok {
 			services = append(services, service)
