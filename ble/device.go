@@ -37,8 +37,6 @@ type DeviceDescriptor interface {
 	LocalName() string
 	// Address returns the Bluetooth address of the device.
 	Address() Address
-	// LookupService looks up a Bluetooth service by its UUID.
-	LookupService(uuid UUID) (Service, bool)
 	// Services returns the Bluetooth services of the device.
 	Services() []Service
 	// RSSI returns the received signal strength indicator of the device.
@@ -59,4 +57,6 @@ type DeviceOperator interface {
 	Disconnect() error
 	// IsConnected returns whether the device is connected.
 	IsConnected() bool
+	// LookupService looks up a Bluetooth service by its UUID.
+	LookupService(uuid UUID) (Service, bool)
 }
