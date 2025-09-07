@@ -83,9 +83,29 @@ func (dev *tinyDevice) RSSI() int {
 }
 
 // LookupService looks up a Bluetooth service by its UUID.
-func (dev *tinyDevice) LookupService(uuid UUID) (Service, bool) {
-	for _, service := range dev.Services() {
-		if uuid.Equal(service.UUID()) {
+func (dev *tinyDevice) LookupService(lookupUUID UUID) (Service, bool) {
+	// If not connected, look up in the cached services.
+	if !dev.IsConnected() {
+		for _, service := range dev.Services() {
+			if lookupUUID.Equal(service.UUID()) {
+				return service, true
+			}
+		}
+		return nil, false
+	}
+
+	// If connected, discover services from the device using the Bluetooth API.
+	tinyServices, err := dev.tinyDev.DiscoverServices([]bluetooth.UUID{bluetooth.UUID(lookupUUID)})
+	if err != nil {
+		return nil, false
+	}
+	for _, tinyService := range tinyServices {
+		tinyServiceUUID := UUID(tinyService.UUID())
+		if lookupUUID.Equal(tinyServiceUUID) {
+			service := newService(
+				UUID(tinyService.UUID()),
+				nil,
+			)
 			return service, true
 		}
 	}
@@ -124,7 +144,8 @@ func (dev *tinyDevice) Connect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	tinyDev, err := adapter.Connect(tinyAddr, bluetooth.ConnectionParams{})
+	connParams := bluetooth.ConnectionParams{} // nolint: exhaustruct
+	tinyDev, err := adapter.Connect(tinyAddr, connParams)
 	if err != nil {
 		return err
 	}
