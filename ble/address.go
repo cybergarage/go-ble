@@ -16,6 +16,7 @@ package ble
 
 import (
 	"encoding/hex"
+	"strings"
 )
 
 // Address represents a Bluetooth address.
@@ -23,5 +24,5 @@ type Address []byte
 
 // String returns the string representation of the Bluetooth address.
 func (addr Address) String() string {
-	return hex.EncodeToString(addr)
+	return strings.ToUpper(hex.EncodeToString(addr))
 }

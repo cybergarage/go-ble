@@ -17,6 +17,7 @@ package ble
 import (
 	"encoding/hex"
 	"encoding/json"
+	"strings"
 
 	"github.com/cybergarage/go-ble/ble/db"
 )
@@ -70,7 +71,7 @@ func (m *manufacturer) MarshalObject() any {
 	}{
 		ID:   m.ID(),
 		Name: m.Name(),
-		Data: hex.EncodeToString(m.data),
+		Data: strings.ToUpper(hex.EncodeToString(m.data)),
 	}
 }
 
