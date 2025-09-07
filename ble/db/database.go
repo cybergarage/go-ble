@@ -32,16 +32,24 @@ var serviceUUIDs []byte
 //go:embed data/sdo_uuids.yaml
 var sdoUUIDs []byte
 
+//go:embed data/characteristic_uuids.yaml
+var characteristicUUIDs []byte
+
+// Database represents a Bluetooth database.
 type Database interface {
 	// LookupCompany looks up a company by its ID.
 	LookupCompany(id int) (Company, bool)
 	// LookupService looks up a service by its UUID.
 	LookupService(uuid uint16) (Service, bool)
+	// LookupCharacteristic looks up a characteristic by its UUID.
+	LookupCharacteristic(uuid uint16) (Characteristic, bool)
 }
 
 var sharedDatabase *database
 
 func init() {
+	// Company Identifiers
+
 	var companies companies
 	err := yaml.Unmarshal(companyIdentifiers, &companies)
 	if err != nil {
@@ -51,6 +59,8 @@ func init() {
 	for _, c := range companies.Companies {
 		companyMap[c.Value] = c
 	}
+
+	// Service UUIDs
 
 	var svcs services
 	err = yaml.Unmarshal(serviceUUIDs, &svcs)
@@ -71,9 +81,22 @@ func init() {
 		serviceMap[s.Uuid] = s
 	}
 
+	// Characteristic UUIDs
+
+	var chars characteristics
+	err = yaml.Unmarshal(characteristicUUIDs, &chars)
+	if err != nil {
+		panic(err)
+	}
+	characteristicMap := make(map[uint16]*characteristic)
+	for _, c := range chars.Characteristics {
+		characteristicMap[c.Uuid] = c
+	}
+
 	sharedDatabase = &database{
 		companies: companyMap,
 		services:  serviceMap,
+		chars:     characteristicMap,
 	}
 }
 
@@ -85,6 +108,7 @@ func DefaultDatabase() Database {
 type database struct {
 	companies map[int]*company
 	services  map[uint16]*service
+	chars     map[uint16]*characteristic
 }
 
 // LookupCompany looks up a company by its ID.
@@ -106,6 +130,19 @@ func (db *database) LookupService(uuid uint16) (Service, bool) {
 		return dbService, true
 	}
 	return &service{
+		Uuid: uuid,
+		Nam:  "",
+		Id:   "",
+	}, false
+}
+
+// LookupCharacteristic looks up a characteristic by its UUID.
+func (db *database) LookupCharacteristic(uuid uint16) (Characteristic, bool) {
+	dbChar, ok := db.chars[uuid]
+	if ok {
+		return dbChar, true
+	}
+	return &characteristic{
 		Uuid: uuid,
 		Nam:  "",
 		Id:   "",
