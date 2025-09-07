@@ -104,7 +104,8 @@ func (dev *tinyDevice) LookupService(lookupUUID UUID) (Service, bool) {
 		if lookupUUID.Equal(tinyServiceUUID) {
 			service := newService(
 				UUID(tinyService.UUID()),
-				nil,
+				[]byte{},
+				[]Characteristic{},
 			)
 			return service, true
 		}
@@ -116,6 +117,7 @@ func (dev *tinyDevice) addServiceDataElement(sd bluetooth.ServiceDataElement) {
 	service := newService(
 		UUID(sd.UUID),
 		sd.Data,
+		[]Characteristic{}, // No characteristics in scan result
 	)
 	dev.addService(service)
 }
@@ -171,6 +173,7 @@ func (dev *tinyDevice) IsConnected() bool {
 	return dev.tinyDev != nil
 }
 
+// MarshalObject returns an object suitable for marshaling to JSON.
 func (dev *tinyDevice) MarshalObject() any {
 	serviceObjs := []any{}
 	for _, service := range dev.Services() {

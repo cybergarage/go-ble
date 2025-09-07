@@ -17,6 +17,7 @@ package ble
 import (
 	"encoding/hex"
 	"encoding/json"
+	"sync"
 
 	"github.com/cybergarage/go-ble/ble/db"
 )
@@ -29,6 +30,8 @@ type Service interface {
 	Name() string
 	// Data returns the data of the service.
 	Data() []byte
+	// Characteristics returns the characteristics of the service.
+	Characteristics() []Characteristic
 	// MarshalObject returns an object suitable for marshaling to JSON.
 	MarshalObject() any
 	// String returns a string representation of the service.
@@ -37,21 +40,27 @@ type Service interface {
 
 type service struct {
 	db.Service
-	uuid UUID
-	data []byte
+	uuid    UUID
+	data    []byte
+	charMap sync.Map
 }
 
-func newService(uuid UUID, data []byte) *service {
+func newService(uuid UUID, data []byte, chars []Characteristic) *service {
 	uuid16, ok := uuid.UUID16()
 	if !ok {
 		uuid16 = 0x0000
 	}
 	dbService, _ := db.DefaultDatabase().LookupService(uuid16)
-	return &service{
+	s := &service{
 		Service: dbService,
 		uuid:    uuid,
 		data:    data,
+		charMap: sync.Map{},
 	}
+	for _, char := range chars {
+		s.charMap.Store(char.UUID(), char)
+	}
+	return s
 }
 
 // UUID returns the UUID of the service.
@@ -64,16 +73,39 @@ func (s *service) Data() []byte {
 	return s.data
 }
 
+// Characteristics returns the characteristics of the service.
+func (s *service) Characteristics() []Characteristic {
+	var chars []Characteristic
+	s.charMap.Range(func(key, value any) bool {
+		char, ok := value.(Characteristic)
+		if ok {
+			chars = append(chars, char)
+		}
+		return true
+	})
+	return chars
+}
+
 // MarshalObject returns an object suitable for marshaling to JSON.
 func (s *service) MarshalObject() any {
+	charObjs := make([]any, 0)
+	s.charMap.Range(func(key, value any) bool {
+		char, ok := value.(Characteristic)
+		if ok {
+			charObjs = append(charObjs, char.MarshalObject())
+		}
+		return true
+	})
 	return struct {
-		UUID string `json:"uuid"`
-		Name string `json:"name"`
-		Data string `json:"data"`
+		UUID            string `json:"uuid"`
+		Name            string `json:"name"`
+		Data            string `json:"data"`
+		Characteristics []any  `json:"characteristics"`
 	}{
-		UUID: s.uuid.String(),
-		Name: s.Name(),
-		Data: hex.EncodeToString(s.data),
+		UUID:            s.uuid.String(),
+		Name:            s.Name(),
+		Data:            hex.EncodeToString(s.data),
+		Characteristics: charObjs,
 	}
 }
 
