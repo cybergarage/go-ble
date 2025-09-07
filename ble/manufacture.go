@@ -41,7 +41,7 @@ type manufacturer struct {
 }
 
 func newNilManufacturer() Manufacturer {
-	company, _ := DefaultDatabase().LookupCompany(0)
+	company, _ := DefaultDatabase().LookupCompany(-1)
 	return &manufacturer{
 		Company: company,
 		data:    nil,
