@@ -199,16 +199,16 @@ func (dev *tinyDevice) MarshalObject() any {
 		serviceObjs = append(serviceObjs, service.MarshalObject())
 	}
 	return struct {
-		Address      Address `json:"address"`
-		LocalName    string  `json:"localName"`
-		Manufacturer any     `json:"manufacturer"`
-		RSSI         int     `json:"rssi"`
-		Services     []any   `json:"services"`
-		DiscoveredAt string  `json:"discoveredAt"`
-		ModifiedAt   string  `json:"modifiedAt"`
-		LastSeenAt   string  `json:"lastSeenAt"`
+		Address      string `json:"address"`
+		LocalName    string `json:"localName"`
+		Manufacturer any    `json:"manufacturer"`
+		RSSI         int    `json:"rssi"`
+		Services     []any  `json:"services"`
+		DiscoveredAt string `json:"discoveredAt"`
+		ModifiedAt   string `json:"modifiedAt"`
+		LastSeenAt   string `json:"lastSeenAt"`
 	}{
-		Address:      dev.Address(),
+		Address:      dev.Address().String(),
 		LocalName:    dev.LocalName(),
 		Manufacturer: dev.Manufacturer().MarshalObject(),
 		RSSI:         dev.RSSI(),
