@@ -1,0 +1,53 @@
+// Copyright (C) 2025 The go-ble Authors. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package vendor
+
+// Characteristic represents a Bluetooth Characteristic.
+type Characteristic interface {
+	// UUID returns the Characteristic UUID.
+	UUID() UUID
+	// Name returns the Characteristic name.
+	Name() string
+	// ID returns the Characteristic ID.
+	ID() string
+}
+
+// nolint: staticcheck
+type characteristic struct {
+	Uuid string `yaml:"uuid"`
+	Nam  string `yaml:"name"`
+	Id   string `yaml:"id"`
+	uuid UUID   `yaml:"-"`
+}
+
+// nolint: tagliatelle
+type characteristics struct {
+	Characteristics []*characteristic `yaml:"uuids"`
+}
+
+// UUID returns the Characteristic UUID.
+func (char *characteristic) UUID() UUID {
+	return char.uuid
+}
+
+// Name returns the Characteristic name.
+func (char *characteristic) Name() string {
+	return char.Nam
+}
+
+// ID returns the Characteristic ID.
+func (char *characteristic) ID() string {
+	return char.Id
+}
