@@ -1,10 +1,10 @@
 uuids:
  - uuid: 18EE2EF5-263D-4559-959F-4F9C429F9D11
-   name: C1 Characteristic
+   name: C1 (Client TX Buffer)
    id:
  - uuid: 18EE2EF5-263D-4559-959F-4F9C429F9D12
-   name: C2 Characteristic
+   name: C2 (Client RX Buffer)
    id:
  - uuid: 64630238-8772-45F2-B87D-748A83218F04
-   name: C3 Characteristic
+   name: C3 (Additional Commissioning Data)
    id:
