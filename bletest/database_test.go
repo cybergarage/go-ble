@@ -17,8 +17,8 @@ package bletest
 import (
 	"testing"
 
+	"github.com/cybergarage/go-ble/ble"
 	"github.com/cybergarage/go-ble/ble/db"
-	ble "github.com/cybergarage/go-ble/ble/types"
 )
 
 func TestEmbeddedDatabase(t *testing.T) {
