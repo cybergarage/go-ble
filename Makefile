@@ -51,7 +51,7 @@ BINS=\
 .PHONY: format vet lint clean
 .IGNORE: lint
 
-all: test
+all: codecov
 
 version:
 	@pushd ${PKG_SRC_DIR} && ./version.gen > version.go && popd
@@ -80,16 +80,18 @@ cover: test
 	open ${PKG_COVER}.html || xdg-open ${PKG_COVER}.html || gnome-open ${PKG_COVER}.html
 
 codecov: test
-	@if [ "$(OS_ENV)" = "macOS" ]; then \
-		curl -Os https://cli.codecov.io/latest/macos/codecov && chmod +x codecov; \
-	elif [ "$(OS_ENV)" = "linux" ]; then \
-		curl -Os https://cli.codecov.io/latest/linux/codecov && chmod +x codecov; \
+	@if [ ! -f ./codecov ]; then \
+		if [ "$(OS_ENV)" = "macOS" ]; then \
+			curl -Os https://cli.codecov.io/latest/macos/codecov && chmod +x codecov; \
+		elif [ "$(OS_ENV)" = "linux" ]; then \
+			curl -Os https://cli.codecov.io/latest/linux/codecov && chmod +x codecov; \
+		fi \
 	fi
-	@if test -f ./codecov; then \
+	@if [ -f ./codecov ] && [ -f CODECOV_TOKEN ]; then \
 		CODECOV_TOKEN=$$(cat CODECOV_TOKEN); \
 		./codecov --verbose upload-process --disable-search -t $$CODECOV_TOKEN -f ${PKG_COVER}.out; \
 	else \
-		echo "./codecov not found"; \
+		echo "codecov or CODECOV_TOKEN not found"; \
 	fi
 	
 build:
