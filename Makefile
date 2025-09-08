@@ -15,7 +15,6 @@
 SHELL := bash
 
 UNAME_S := $(shell uname -s)
-
 ifeq ($(UNAME_S),Darwin)
 	OS_ENV = macOS
 else ifeq ($(UNAME_S),Linux)
