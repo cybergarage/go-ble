@@ -25,6 +25,16 @@ import (
 
 // Service represents a Bluetooth service.
 type Service interface {
+	// ServiceDescriptor represents a Bluetooth service descriptor.
+	ServiceDescriptor
+	// MarshalObject returns an object suitable for marshaling to JSON.
+	MarshalObject() any
+	// String returns a string representation of the service.
+	String() string
+}
+
+// ServiceDescriptor represents a Bluetooth service descriptor.
+type ServiceDescriptor interface {
 	// Device returns the device that the service belongs to.
 	Device() Device
 	// UUID returns the UUID of the service.
@@ -33,12 +43,10 @@ type Service interface {
 	Name() string
 	// Data returns the data of the service.
 	Data() []byte
+	// LookupCharacteristic looks up a characteristic by UUID.
+	LookupCharacteristic(uuid UUID) (Characteristic, bool)
 	// Characteristics returns the characteristics of the service.
 	Characteristics() []Characteristic
-	// MarshalObject returns an object suitable for marshaling to JSON.
-	MarshalObject() any
-	// String returns a string representation of the service.
-	String() string
 }
 
 type service struct {
@@ -77,6 +85,19 @@ func (s *service) UUID() UUID {
 // Data returns the data of the service.
 func (s *service) Data() []byte {
 	return s.data
+}
+
+// LookupCharacteristic looks up a characteristic by UUID.
+func (s *service) LookupCharacteristic(uuid UUID) (Characteristic, bool) {
+	char, ok := s.charMap.Load(uuid)
+	if !ok {
+		return nil, false
+	}
+	c, ok := char.(Characteristic)
+	if !ok {
+		return nil, false
+	}
+	return c, true
 }
 
 // Characteristics returns the characteristics of the service.
