@@ -44,7 +44,7 @@ func (char *tinyCharacteristic) Read() ([]byte, error) {
 }
 
 // Write writes the characteristic value.
-func (char *tinyCharacteristic) Write(data []byte) (n int, err error) {
+func (char *tinyCharacteristic) Write(data []byte) (int, error) {
 	if char.tinyChar == nil {
 		return 0, ErrNotConnected
 	}
