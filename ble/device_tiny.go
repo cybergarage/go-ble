@@ -116,6 +116,7 @@ func (dev *tinyDevice) LookupService(lookupUUID UUID) (Service, bool) {
 				adData = adService.Data()
 			}
 			service := newService(
+				dev,
 				UUID(tinyService.UUID()),
 				adData,
 				[]Characteristic{},
@@ -134,6 +135,7 @@ func (dev *tinyDevice) LookupService(lookupUUID UUID) (Service, bool) {
 
 func (dev *tinyDevice) addServiceDataElement(sd bluetooth.ServiceDataElement) {
 	service := newService(
+		dev,
 		UUID(sd.UUID),
 		sd.Data,
 		[]Characteristic{}, // No characteristics in scan result

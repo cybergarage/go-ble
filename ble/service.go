@@ -25,6 +25,8 @@ import (
 
 // Service represents a Bluetooth service.
 type Service interface {
+	// Device returns the device that the service belongs to.
+	Device() Device
 	// UUID returns the UUID of the service.
 	UUID() UUID
 	// Name returns the name of the service.
@@ -40,16 +42,18 @@ type Service interface {
 }
 
 type service struct {
+	dev Device
 	db.Service
 	uuid    UUID
 	data    []byte
 	charMap sync.Map
 }
 
-func newService(uuid UUID, data []byte, chars []Characteristic) *service {
+func newService(dev Device, uuid UUID, data []byte, chars []Characteristic) *service {
 	dbService, _ := db.DefaultDatabase().LookupService(uuid)
 	s := &service{
 		Service: dbService,
+		dev:     dev,
 		uuid:    uuid,
 		data:    data,
 		charMap: sync.Map{},
@@ -58,6 +62,11 @@ func newService(uuid UUID, data []byte, chars []Characteristic) *service {
 		s.charMap.Store(char.UUID(), char)
 	}
 	return s
+}
+
+// Device returns the device that the service belongs to.
+func (s *service) Device() Device {
+	return s.dev
 }
 
 // UUID returns the UUID of the service.
