@@ -27,4 +27,8 @@ go.work.sum
 # Go coverage files
 *.html
 
+# Codecov files
+CODECOV_TOKEN
+codecov
+
 .DS_Store
