@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ble
+package db
 
 import (
 	"github.com/cybergarage/go-ble/ble/types"
@@ -20,11 +20,6 @@ import (
 
 // UUID represents a Bluetooth UUID.
 type UUID = types.UUID
-
-// NewUUIDFromUUIDString creates a new UUID from the given UUID string.
-func NewUUIDFromUUIDString(s string) (UUID, error) {
-	return types.NewUUIDFromUUIDString(s)
-}
 
 // NewUUIDFromUUID16 creates a new UUID from the given 16-bit UUID.
 func NewUUIDFromUUID16(u uint16) UUID {

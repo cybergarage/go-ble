@@ -17,7 +17,7 @@ package bletest
 import (
 	"testing"
 
-	"github.com/cybergarage/go-ble/ble"
+	ble "github.com/cybergarage/go-ble/ble/types"
 )
 
 func TestParseUUID(t *testing.T) {
