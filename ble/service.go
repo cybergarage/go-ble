@@ -47,11 +47,7 @@ type service struct {
 }
 
 func newService(uuid UUID, data []byte, chars []Characteristic) *service {
-	uuid16, ok := uuid.UUID16()
-	if !ok {
-		uuid16 = 0x0000
-	}
-	dbService, _ := db.DefaultDatabase().LookupService(uuid16)
+	dbService, _ := db.DefaultDatabase().LookupService(uuid)
 	s := &service{
 		Service: dbService,
 		uuid:    uuid,

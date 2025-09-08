@@ -17,6 +17,7 @@ package db
 import (
 	_ "embed"
 
+	"github.com/cybergarage/go-ble/ble/db/vendor"
 	"gopkg.in/yaml.v2"
 )
 
@@ -40,9 +41,9 @@ type Database interface {
 	// LookupCompany looks up a company by its ID.
 	LookupCompany(id int) (Company, bool)
 	// LookupService looks up a service by its UUID.
-	LookupService(uuid uint16) (Service, bool)
+	LookupService(uuid UUID) (Service, bool)
 	// LookupCharacteristic looks up a characteristic by its UUID.
-	LookupCharacteristic(uuid uint16) (Characteristic, bool)
+	LookupCharacteristic(uuid UUID) (Characteristic, bool)
 }
 
 var sharedDatabase *database
@@ -67,9 +68,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	serviceMap := make(map[uint16]*service)
+	serviceMap := make(map[UUID]*service)
 	for _, s := range svcs.Services {
-		serviceMap[s.Uuid] = s
+		s.uuid = NewUUIDFromUUID16(s.Uuid)
+		serviceMap[s.uuid] = s
 	}
 
 	var sdos services
@@ -78,7 +80,8 @@ func init() {
 		panic(err)
 	}
 	for _, s := range sdos.Services {
-		serviceMap[s.Uuid] = s
+		s.uuid = NewUUIDFromUUID16(s.Uuid)
+		serviceMap[s.uuid] = s
 	}
 
 	// Characteristic UUIDs
@@ -88,9 +91,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	characteristicMap := make(map[uint16]*characteristic)
+	characteristicMap := make(map[UUID]*characteristic)
 	for _, c := range chars.Characteristics {
-		characteristicMap[c.Uuid] = c
+		c.uuid = NewUUIDFromUUID16(c.Uuid)
+		characteristicMap[c.uuid] = c
 	}
 
 	sharedDatabase = &database{
@@ -107,8 +111,8 @@ func DefaultDatabase() Database {
 
 type database struct {
 	companies map[int]*company
-	services  map[uint16]*service
-	chars     map[uint16]*characteristic
+	services  map[UUID]*service
+	chars     map[UUID]*characteristic
 }
 
 // LookupCompany looks up a company by its ID.
@@ -124,26 +128,39 @@ func (db *database) LookupCompany(id int) (Company, bool) {
 }
 
 // LookupService looks up a service by its UUID.
-func (db *database) LookupService(uuid uint16) (Service, bool) {
+func (db *database) LookupService(uuid UUID) (Service, bool) {
 	dbService, ok := db.services[uuid]
 	if ok {
 		return dbService, true
 	}
 	return &service{
-		Uuid: uuid,
+		Uuid: 0,
+		uuid: uuid,
 		Nam:  "",
 		Id:   "",
 	}, false
 }
 
 // LookupCharacteristic looks up a characteristic by its UUID.
-func (db *database) LookupCharacteristic(uuid uint16) (Characteristic, bool) {
-	dbChar, ok := db.chars[uuid]
+func (db *database) LookupCharacteristic(uuid UUID) (Characteristic, bool) {
+	lookupSigCharacteristic := func(uuid UUID) (Characteristic, bool) {
+		dbChar, ok := db.chars[uuid]
+		if ok {
+			return dbChar, true
+		}
+		return nil, false
+	}
+	char, ok := lookupSigCharacteristic(uuid)
 	if ok {
-		return dbChar, true
+		return char, true
+	}
+	char, ok = vendor.DefaultDatabase().LookupCharacteristic(uuid)
+	if ok {
+		return char, true
 	}
 	return &characteristic{
-		Uuid: uuid,
+		Uuid: 0,
+		uuid: uuid,
 		Nam:  "",
 		Id:   "",
 	}, false

@@ -17,7 +17,7 @@ package db
 // Service represents a Bluetooth Service.
 type Service interface {
 	// UUID returns the Service UUID.
-	UUID() uint16
+	UUID() UUID
 	// Name returns the Service name.
 	Name() string
 	// ID returns the Service ID.
@@ -29,6 +29,7 @@ type service struct {
 	Uuid uint16 `yaml:"uuid"`
 	Nam  string `yaml:"name"`
 	Id   string `yaml:"id"`
+	uuid UUID   `yaml:"-"`
 }
 
 // nolint: tagliatelle
@@ -37,8 +38,8 @@ type services struct {
 }
 
 // UUID returns the Service UUID.
-func (s *service) UUID() uint16 {
-	return s.Uuid
+func (s *service) UUID() UUID {
+	return s.uuid
 }
 
 // Name returns the Service name.

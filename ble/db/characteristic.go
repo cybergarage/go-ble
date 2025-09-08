@@ -17,7 +17,7 @@ package db
 // Characteristic represents a Bluetooth Characteristic.
 type Characteristic interface {
 	// UUID returns the Characteristic UUID.
-	UUID() uint16
+	UUID() UUID
 	// Name returns the Characteristic name.
 	Name() string
 	// ID returns the Characteristic ID.
@@ -29,6 +29,7 @@ type characteristic struct {
 	Uuid uint16 `yaml:"uuid"`
 	Nam  string `yaml:"name"`
 	Id   string `yaml:"id"`
+	uuid UUID   `yaml:"-"`
 }
 
 // nolint: tagliatelle
@@ -37,8 +38,8 @@ type characteristics struct {
 }
 
 // UUID returns the Characteristic UUID.
-func (char *characteristic) UUID() uint16 {
-	return char.Uuid
+func (char *characteristic) UUID() UUID {
+	return char.uuid
 }
 
 // Name returns the Characteristic name.

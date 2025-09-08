@@ -42,21 +42,12 @@ type characteristic struct {
 }
 
 func newCharacteristic(uuid UUID) *characteristic {
-	uuid16, ok := uuid.UUID16()
-	if !ok {
-		uuid16 = 0x0000
-	}
-	dbChar, _ := db.DefaultDatabase().LookupCharacteristic(uuid16)
+	dbChar, _ := db.DefaultDatabase().LookupCharacteristic(uuid)
 	return &characteristic{
 		Uuid: uuid,
 		Nam:  dbChar.Name(),
 		Id:   dbChar.ID(),
 	}
-}
-
-// nolint: tagliatelle
-type characteristics struct {
-	Characteristics []*characteristic `yaml:"uuids"`
 }
 
 // UUID returns the Characteristic UUID.
