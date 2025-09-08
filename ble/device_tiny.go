@@ -115,9 +115,10 @@ func (dev *tinyDevice) LookupService(lookupUUID UUID) (Service, bool) {
 			if ok {
 				adData = adService.Data()
 			}
-			service := newService(
+			service := newTinyService(
 				dev,
-				UUID(tinyService.UUID()),
+				&tinyService,
+				tinyServiceUUID,
 				adData,
 				[]Characteristic{},
 			)
