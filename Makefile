@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+#	http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +13,16 @@
 # limitations under the License.
 
 SHELL := bash
+
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Darwin)
+	OS_ENV = macOS
+else ifeq ($(UNAME_S),Linux)
+	OS_ENV = linux
+else
+	OS_ENV = other
+endif
 
 GOBIN := $(shell go env GOPATH)/bin
 PATH := $(GOBIN):$(PATH)
@@ -35,9 +45,9 @@ BIN_ID=${MODULE_ROOT}/${BIN_SRC_DIR}
 BIN_CLI=${PKG_NAME}ctl
 BIN_CLI_ID=${BIN_ID}/${BIN_CLI}
 BIN_SRCS=\
-        ${BIN_SRC_DIR}/${BIN_CLI}
+		${BIN_SRC_DIR}/${BIN_CLI}
 BINS=\
-        ${BIN_CLI_ID}
+		${BIN_CLI_ID}
 
 .PHONY: format vet lint clean
 .IGNORE: lint
@@ -70,6 +80,19 @@ test: lint
 cover: test
 	open ${PKG_COVER}.html || xdg-open ${PKG_COVER}.html || gnome-open ${PKG_COVER}.html
 
+codecov: test
+	@if [ "$(OS_ENV)" = "macOS" ]; then \
+		curl -Os https://cli.codecov.io/latest/macos/codecov && chmod +x codecov; \
+	elif [ "$(OS_ENV)" = "linux" ]; then \
+		curl -Os https://cli.codecov.io/latest/linux/codecov && chmod +x codecov; \
+	fi
+	@if test -f ./codecov; then \
+		CODECOV_TOKEN=$$(cat CODECOV_TOKEN); \
+		./codecov --verbose upload-process --disable-search -t $$CODECOV_TOKEN -f ${PKG_COVER}.out; \
+	else \
+		echo "./codecov not found"; \
+	fi
+	
 build:
 	go build -v -gcflags=${GCFLAGS} -ldflags=${LDFLAGS} ${BINS}
 
