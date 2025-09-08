@@ -20,8 +20,23 @@ import (
 	"github.com/cybergarage/go-ble/ble/db"
 )
 
+// OnCharacteristicNotification represents a callback function to be called when a notification is received.
+type OnCharacteristicNotification func(char Characteristic, buf []byte)
+
 // Characteristic represents a Bluetooth Characteristic.
 type Characteristic interface {
+	// CharacteristicDescriptor represents a Bluetooth Characteristic Descriptor.
+	CharacteristicDescriptor
+	// CharacteristicOperator represents operations that can be performed on a Bluetooth Characteristic.
+	CharacteristicOperator
+	// MarshalObject returns an object suitable for marshaling to JSON.
+	MarshalObject() any
+	// String returns a string representation of the characteristic.
+	String() string
+}
+
+// CharacteristicDescriptor represents a Bluetooth Characteristic Descriptor.
+type CharacteristicDescriptor interface {
 	// Service returns the service that the characteristic belongs to.
 	Service() Service
 	// UUID returns the Characteristic UUID.
@@ -30,10 +45,16 @@ type Characteristic interface {
 	Name() string
 	// ID returns the Characteristic ID.
 	ID() string
-	// MarshalObject returns an object suitable for marshaling to JSON.
-	MarshalObject() any
-	// String returns a string representation of the characteristic.
-	String() string
+}
+
+// CharacteristicOperator represents operations that can be performed on a Bluetooth Characteristic.
+type CharacteristicOperator interface {
+	// Read reads the characteristic value.
+	Read() ([]byte, error)
+	// Write writes the characteristic value.
+	Write([]byte) (int, error)
+	// Notify subscribes to characteristic notifications.
+	Notify(OnCharacteristicNotification) error
 }
 
 // nolint: staticcheck
@@ -72,6 +93,21 @@ func (char *characteristic) Name() string {
 // ID returns the Characteristic ID.
 func (char *characteristic) ID() string {
 	return char.Id
+}
+
+// Read reads the characteristic value.
+func (char *characteristic) Read() ([]byte, error) {
+	return nil, ErrNotConnected
+}
+
+// Write writes the characteristic value.
+func (char *characteristic) Write(data []byte) (int, error) {
+	return 0, ErrNotConnected
+}
+
+// Notify subscribes to characteristic notifications.
+func (char *characteristic) Notify(callback OnCharacteristicNotification) error {
+	return ErrNotConnected
 }
 
 func (char *characteristic) MarshalObject() any {
