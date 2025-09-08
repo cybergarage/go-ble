@@ -22,6 +22,8 @@ import (
 
 // Characteristic represents a Bluetooth Characteristic.
 type Characteristic interface {
+	// Service returns the service that the characteristic belongs to.
+	Service() Service
 	// UUID returns the Characteristic UUID.
 	UUID() UUID
 	// Name returns the Characteristic name.
@@ -36,18 +38,25 @@ type Characteristic interface {
 
 // nolint: staticcheck
 type characteristic struct {
-	Uuid UUID   `yaml:"uuid"`
-	Nam  string `yaml:"name"`
-	Id   string `yaml:"id"`
+	service Service
+	Uuid    UUID
+	Nam     string
+	Id      string
 }
 
-func newCharacteristic(uuid UUID) *characteristic {
+func newCharacteristic(service Service, uuid UUID) *characteristic {
 	dbChar, _ := db.DefaultDatabase().LookupCharacteristic(uuid)
 	return &characteristic{
-		Uuid: uuid,
-		Nam:  dbChar.Name(),
-		Id:   dbChar.ID(),
+		service: service,
+		Uuid:    uuid,
+		Nam:     dbChar.Name(),
+		Id:      dbChar.ID(),
 	}
+}
+
+// Service returns the service that the characteristic belongs to.
+func (char *characteristic) Service() Service {
+	return char.service
 }
 
 // UUID returns the Characteristic UUID.

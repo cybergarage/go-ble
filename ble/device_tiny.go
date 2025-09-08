@@ -123,6 +123,7 @@ func (dev *tinyDevice) LookupService(lookupUUID UUID) (Service, bool) {
 			)
 			for _, tinyChar := range tinyChars {
 				char := newCharacteristic(
+					service,
 					UUID(tinyChar.UUID()),
 				)
 				service.addDeviceCharacteristic(char)
