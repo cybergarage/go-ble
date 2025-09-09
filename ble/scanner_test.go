@@ -16,6 +16,7 @@ package ble_test
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/cybergarage/go-ble/ble"
@@ -38,5 +39,30 @@ func ExampleScanner() {
 
 	for n, dev := range scanner.Devices() {
 		log.Infof("[%d] %s", n, dev.String())
+	}
+}
+
+func ExampleScanner_matter() {
+	scanner := ble.NewScanner()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	scanner.Scan(ctx)
+	lookupMatterDevices := func(devs []ble.Device, targetDisc uint16) (ble.Device, bool) {
+		for _, dev := range devs {
+			if service, ok := dev.LookupService(ble.NewUUIDFromUUID16(0xFFF6)); ok {
+				if 3 <= len(service.Data()) {
+					serviceDisc := uint16(service.Data()[1]) | (uint16(service.Data()[2]) << 8)
+					if serviceDisc == targetDisc {
+						return dev, true
+					}
+				}
+			}
+		}
+		return nil, false
+	}
+	disc := uint16(4068)
+	dev, ok := lookupMatterDevices(scanner.Devices(), disc)
+	if ok {
+		fmt.Printf("Matter device found: %s", dev.String())
 	}
 }
