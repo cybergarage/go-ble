@@ -23,10 +23,10 @@ type tinyCentral struct {
 }
 
 // NewCentral creates a new Bluetooth central device.
-func NewCentral() (Central, error) {
+func NewCentral() Central {
 	return &tinyCentral{
 		Scanner: NewScanner(),
-	}, nil
+	}
 }
 
 // Connect connects to the specified device.
