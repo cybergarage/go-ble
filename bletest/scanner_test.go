@@ -40,13 +40,10 @@ func TestScanner(t *testing.T) {
 
 	log.Infof("Discovered devices:")
 	for n, dev := range scanner.Devices() {
+		if _, ok := dev.LookupService(0xFFF6); !ok {
+			// skip devices without the target service
+			continue
+		}
 		log.Infof("[%d] %s", n, dev.String())
-		// if err := dev.Connect(context.Background()); err != nil {
-		// 	log.Errorf("Failed to connect: %v", err)
-		// 	continue
-		// }
-		// if err := dev.Disconnect(); err != nil {
-		// 	log.Errorf("Failed to disconnect: %v", err)
-		// }
 	}
 }

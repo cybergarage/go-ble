@@ -92,7 +92,12 @@ func (dev *tinyDevice) lookupAdvertisedService(lookupUUID UUID) (Service, bool) 
 }
 
 // LookupService looks up a Bluetooth service by its UUID.
-func (dev *tinyDevice) LookupService(lookupUUID UUID) (Service, bool) {
+func (dev *tinyDevice) LookupService(anyUUID any) (Service, bool) {
+	lookupUUID, err := NewUUIDFrom(anyUUID)
+	if err != nil {
+		return nil, false
+	}
+
 	// If not connected, look up in the cached services.
 	if !dev.IsConnected() {
 		return dev.lookupAdvertisedService(lookupUUID)

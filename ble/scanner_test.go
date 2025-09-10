@@ -49,7 +49,7 @@ func ExampleScanner_matter() {
 	scanner.Scan(ctx)
 	lookupMatterDevices := func(devs []ble.Device, targetDisc uint16) (ble.Device, bool) {
 		for _, dev := range devs {
-			if service, ok := dev.LookupService(ble.NewUUIDFromUUID16(0xFFF6)); ok {
+			if service, ok := dev.LookupService(0xFFF6); ok {
 				if 3 <= len(service.Data()) {
 					serviceDisc := uint16(service.Data()[1]) | (uint16(service.Data()[2]) << 8)
 					if serviceDisc == targetDisc {
