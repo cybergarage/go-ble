@@ -60,8 +60,8 @@ func ExampleScanner_matter() {
 		}
 		return nil, false
 	}
-	disc := uint16(4068)
-	dev, ok := lookupMatterDevices(scanner.Devices(), disc)
+	targetDisc := uint16(4068)
+	dev, ok := lookupMatterDevices(scanner.Devices(), targetDisc)
 	if ok {
 		fmt.Printf("Matter device found: %s", dev.String())
 	}
