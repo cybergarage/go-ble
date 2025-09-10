@@ -4,6 +4,7 @@ go 1.25
 
 require (
 	github.com/cybergarage/go-logger v1.3.11
+	github.com/cybergarage/go-safecast v1.3.4
 	github.com/google/uuid v1.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	tinygo.org/x/bluetooth v0.13.0
