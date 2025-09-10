@@ -18,13 +18,17 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cybergarage/go-safecast/safecast"
 	"github.com/google/uuid"
 )
 
 // UUID represents a Bluetooth UUID.
 type UUID [4]uint32
 
-var baseUUID = UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x00000000}
+var (
+	nilUUID  = UUID{0x00000000, 0x00000000, 0x00000000, 0x00000000}
+	baseUUID = UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x00000000}
+)
 
 // NewUUIDFromUUID creates a UUID from a uuid.UUID.
 func NewUUIDFromUUID(uuid uuid.UUID) UUID {
@@ -37,22 +41,42 @@ func NewUUIDFromUUID(uuid uuid.UUID) UUID {
 	}
 }
 
-// NewUUIDFromString creates a UUID from a string representation.
-func NewUUIDFromUUIDString(s string) (UUID, error) {
+// NewUUIDFromString creates a UUID from a string.
+func NewUUIDFromString(s string) (UUID, error) {
 	u, err := uuid.Parse(s)
 	if err != nil {
-		return UUID{}, err
+		return nilUUID, err
 	}
 	return NewUUIDFromUUID(u), nil
 }
 
-// MustUUIDFromUUIDString creates a UUID from a string representation and return base UUID if it fails.
-func MustUUIDFromUUIDString(s string) UUID {
-	u, err := NewUUIDFromUUIDString(s)
+// MustUUIDFromString creates a UUID from a string and return nil UUID if it fails.
+func MustUUIDFromString(s string) UUID {
+	u, err := NewUUIDFromString(s)
 	if err != nil {
-		return baseUUID
+		return nilUUID
 	}
 	return u
+}
+
+// NewUUIDFromBytes creates a UUID from a byte slice.
+func NewUUIDFromBytes(b []byte) (UUID, error) {
+	if len(b) != 16 {
+		return nilUUID, fmt.Errorf("invalid UUID byte length: %d", len(b))
+	}
+	var u uuid.UUID
+	copy(u[:], b)
+	return NewUUIDFromUUID(u), nil
+}
+
+// NewUUIDFromUUID16 creates a UUID from a 16-bit UUID.
+func NewUUIDFromUUID16(u16 uint16) UUID {
+	return UUID{
+		baseUUID[0],
+		baseUUID[1],
+		baseUUID[2],
+		uint32(u16),
+	}
 }
 
 // NewUUIDFromUUID16 creates a UUID from a 32-bit UUID.
@@ -65,14 +89,42 @@ func NewUUIDFromUUID32(u32 uint32) UUID {
 	}
 }
 
-// NewUUIDFromUUID16 creates a UUID from a 16-bit UUID.
-func NewUUIDFromUUID16(u16 uint16) UUID {
-	return UUID{
-		baseUUID[0],
-		baseUUID[1],
-		baseUUID[2],
-		uint32(u16),
+// NewUUIDFrom creates a UUID from various types.
+func NewUUIDFrom(v any) (UUID, error) {
+	switch v := v.(type) {
+	case UUID:
+		return v, nil
+	case uuid.UUID:
+		return NewUUIDFromUUID(v), nil
+	case uint16:
+		return NewUUIDFromUUID16(v), nil
+	case uint32:
+		return NewUUIDFromUUID32(v), nil
+	case string:
+		return NewUUIDFromString(v)
+	case []byte:
+		return NewUUIDFromBytes(v)
 	}
+
+	var uuid16 uint16
+	if safecast.To(v, &uuid16) == nil {
+		return NewUUIDFromUUID16(uuid16), nil
+	}
+	var uuid32 uint32
+	if safecast.To(v, &uuid32) == nil {
+		return NewUUIDFromUUID32(uuid32), nil
+	}
+
+	return nilUUID, fmt.Errorf("invalid UUID type: %T (%v)", v, v)
+}
+
+// MustUUIDFrom creates a UUID from various types and return nil UUID if it fails.
+func MustUUIDFrom(v any) UUID {
+	u, err := NewUUIDFrom(v)
+	if err != nil {
+		return nilUUID
+	}
+	return u
 }
 
 // Equal checks if two UUIDs are equal.

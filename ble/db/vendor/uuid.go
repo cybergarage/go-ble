@@ -23,5 +23,5 @@ type UUID = types.UUID
 
 // NewUUIDFromUUIDString creates a new UUID from the given UUID string.
 func NewUUIDFromUUIDString(s string) (UUID, error) {
-	return types.NewUUIDFromUUIDString(s)
+	return types.NewUUIDFromString(s)
 }

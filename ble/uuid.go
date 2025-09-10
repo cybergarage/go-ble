@@ -23,15 +23,25 @@ type UUID = types.UUID
 
 // NewUUIDFromUUIDString creates a new UUID from the given UUID string.
 func NewUUIDFromUUIDString(s string) (UUID, error) {
-	return types.NewUUIDFromUUIDString(s)
+	return types.NewUUIDFromString(s)
 }
 
-// MustUUIDFromUUIDString creates a UUID from a string representation and return base UUID if it fails.
+// MustUUIDFromUUIDString creates a UUID from a string representation and return nil UUID if it fails.
 func MustUUIDFromUUIDString(s string) UUID {
-	return types.MustUUIDFromUUIDString(s)
+	return types.MustUUIDFromString(s)
 }
 
 // NewUUIDFromUUID16 creates a new UUID from the given 16-bit UUID.
 func NewUUIDFromUUID16(u uint16) UUID {
 	return types.NewUUIDFromUUID16(u)
+}
+
+// NewUUIDFrom creates a UUID from various types.
+func NewUUIDFrom(v any) (UUID, error) {
+	return types.NewUUIDFrom(v)
+}
+
+// MustUUIDFrom creates a UUID from various types and return nil UUID if it fails.
+func MustUUIDFrom(v any) UUID {
+	return types.MustUUIDFrom(v)
 }
