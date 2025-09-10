@@ -17,6 +17,8 @@ package ble
 import (
 	"encoding/hex"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 // Address represents a Bluetooth address.
@@ -24,5 +26,9 @@ type Address []byte
 
 // String returns the string representation of the Bluetooth address.
 func (addr Address) String() string {
+	uuid, err := uuid.ParseBytes(addr)
+	if err == nil {
+		return strings.ToUpper(uuid.String())
+	}
 	return strings.ToUpper(hex.EncodeToString(addr))
 }
