@@ -44,7 +44,7 @@ type ServiceDescriptor interface {
 	// Data returns the data of the service.
 	Data() []byte
 	// LookupCharacteristic looks up a characteristic by UUID.
-	LookupCharacteristic(uuid UUID) (Characteristic, bool)
+	LookupCharacteristic(uuid any) (Characteristic, bool)
 	// Characteristics returns the characteristics of the service.
 	Characteristics() []Characteristic
 }
@@ -88,8 +88,12 @@ func (s *service) Data() []byte {
 }
 
 // LookupCharacteristic looks up a characteristic by UUID.
-func (s *service) LookupCharacteristic(uuid UUID) (Characteristic, bool) {
-	char, ok := s.charMap.Load(uuid)
+func (s *service) LookupCharacteristic(anyUUID any) (Characteristic, bool) {
+	lookupUUID, err := NewUUIDFrom(anyUUID)
+	if err != nil {
+		return nil, false
+	}
+	char, ok := s.charMap.Load(lookupUUID)
 	if !ok {
 		return nil, false
 	}
