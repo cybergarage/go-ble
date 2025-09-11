@@ -21,4 +21,8 @@ import (
 var (
 	// ErrNotConnectable indicates that the device is not connectable.
 	ErrNotConnected = errors.New("not connected")
+	// ErrNotSet indicates that the value is not set.
+	ErrNotSet = errors.New("not set")
+	// ErrInvalid indicates that the value is invalid.
+	ErrInvalid = errors.New("invalid")
 )
