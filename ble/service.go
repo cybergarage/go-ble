@@ -17,6 +17,7 @@ package ble
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -27,6 +28,8 @@ import (
 type Service interface {
 	// ServiceDescriptor represents a Bluetooth service descriptor.
 	ServiceDescriptor
+	// ServiceOperator represents a Bluetooth service operator.
+	ServiceOperator
 	// MarshalObject returns an object suitable for marshaling to JSON.
 	MarshalObject() any
 	// String returns a string representation of the service.
@@ -47,6 +50,42 @@ type ServiceDescriptor interface {
 	LookupCharacteristic(uuid any) (Characteristic, bool)
 	// Characteristics returns the characteristics of the service.
 	Characteristics() []Characteristic
+}
+
+type serviceTransportUUIDs struct {
+	readUUID   UUID
+	writeUUID  UUID
+	notifyUUID UUID
+}
+
+// ServiceTransportOption represents options for opening a transport on a service.
+type ServiceTransportOption func(*serviceTransportUUIDs)
+
+// WithTransportReadUUID sets the read UUID for the service transport.
+func WithTransportReadUUID(uuid UUID) ServiceTransportOption {
+	return func(opts *serviceTransportUUIDs) {
+		opts.readUUID = uuid
+	}
+}
+
+// WithTransportWriteUUID sets the write UUID for the service transport.
+func WithTransportWriteUUID(uuid UUID) ServiceTransportOption {
+	return func(opts *serviceTransportUUIDs) {
+		opts.writeUUID = uuid
+	}
+}
+
+// WithTransportNotifyUUID sets the notify UUID for the service transport.
+func WithTransportNotifyUUID(uuid UUID) ServiceTransportOption {
+	return func(opts *serviceTransportUUIDs) {
+		opts.notifyUUID = uuid
+	}
+}
+
+// ServiceOperator represents a Bluetooth service operator.
+type ServiceOperator interface {
+	// Open opens a transport on the service with the specified options.
+	Open(opts ...ServiceTransportOption) (Transport, error)
 }
 
 type service struct {
@@ -143,6 +182,44 @@ func (s *service) MarshalObject() any {
 		Data:            strings.ToUpper(hex.EncodeToString(s.data)),
 		Characteristics: charObjs,
 	}
+}
+
+// Open opens a transport on the service with the specified options.
+func (s *service) Open(opts ...ServiceTransportOption) (Transport, error) {
+	uuids := serviceTransportUUIDs{
+		readUUID:   NewNilUUID(),
+		writeUUID:  NewNilUUID(),
+		notifyUUID: NewNilUUID(),
+	}
+
+	transportOpts := []TransportOption{}
+	if !uuids.readUUID.IsNil() {
+		char, ok := s.LookupCharacteristic(uuids.readUUID)
+		if !ok {
+			return nil, fmt.Errorf("characteristic %w: %s", ErrNotFound, uuids.readUUID.String())
+		}
+		transportOpts = append(transportOpts, WithTransportReadCharacteristic(char))
+	}
+	if !uuids.writeUUID.IsNil() {
+		char, ok := s.LookupCharacteristic(uuids.writeUUID)
+		if !ok {
+			return nil, fmt.Errorf("characteristic %w: %s", ErrNotFound, uuids.writeUUID.String())
+		}
+		transportOpts = append(transportOpts, WithTransportWriteCharacteristic(char))
+	}
+	if !uuids.notifyUUID.IsNil() {
+		char, ok := s.LookupCharacteristic(uuids.notifyUUID)
+		if !ok {
+			return nil, fmt.Errorf("characteristic %w: %s", ErrNotFound, uuids.notifyUUID.String())
+		}
+		transportOpts = append(transportOpts, WithTransportNotifyCharacteristic(char))
+	}
+
+	transport := NewTransport(transportOpts...)
+	if err := transport.Open(); err != nil {
+		return nil, err
+	}
+	return transport, nil
 }
 
 // String returns a string representation of the service.

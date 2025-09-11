@@ -25,4 +25,6 @@ var (
 	ErrNotSet = errors.New("not set")
 	// ErrInvalid indicates that the value is invalid.
 	ErrInvalid = errors.New("invalid")
+	// ErrNotFound indicates that the value was not found.
+	ErrNotFound = errors.New("not found")
 )
