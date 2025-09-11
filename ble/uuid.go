@@ -45,3 +45,8 @@ func NewUUIDFrom(v any) (UUID, error) {
 func MustUUIDFrom(v any) UUID {
 	return types.MustUUIDFrom(v)
 }
+
+// NewNilUUID creates a nil UUID.
+func NewNilUUID() UUID {
+	return types.NewNilUUID()
+}

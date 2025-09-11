@@ -127,9 +127,19 @@ func MustUUIDFrom(v any) UUID {
 	return u
 }
 
+// NewNilUUID creates a nil UUID.
+func NewNilUUID() UUID {
+	return nilUUID
+}
+
 // Equal checks if two UUIDs are equal.
 func (u UUID) Equal(other UUID) bool {
 	return u == other
+}
+
+// IsNil checks if the UUID is a nil UUID.
+func (u UUID) IsNil() bool {
+	return u.Equal(nilUUID)
 }
 
 // IsUUID16 checks if the UUID is a 16-bit UUID.
