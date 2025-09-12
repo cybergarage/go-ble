@@ -19,6 +19,12 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
+)
+
+const (
+	// DefaultTransportTimeout is the default timeout for transport operations.
+	DefaultTransportTimeout = 10 * time.Second
 )
 
 // TransportOption represents a function type to set transport options.
@@ -102,24 +108,38 @@ func (t *transport) Close() error {
 
 // Read reads bytes from the transport.
 func (t *transport) Read(ctx context.Context) ([]byte, error) {
-	t.Lock()
-	if 0 < t.notifyBytes.Len() {
-		elem := t.notifyBytes.Front()
-		t.notifyBytes.Remove(elem)
-		t.Unlock()
-		b, ok := elem.Value.([]byte)
-		if !ok {
-			return nil, fmt.Errorf("%w type: %T", ErrInvalid, elem.Value)
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, DefaultTransportTimeout)
+		defer cancel()
+	}
+
+	switch {
+	case t.notifyCh != nil:
+		for {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			default:
+				t.Lock()
+				if 0 < t.notifyBytes.Len() {
+					elem := t.notifyBytes.Front()
+					t.notifyBytes.Remove(elem)
+					t.Unlock()
+					b, ok := elem.Value.([]byte)
+					if !ok {
+						return nil, fmt.Errorf("%w type: %T", ErrInvalid, elem.Value)
+					}
+					return b, nil
+				}
+				t.Unlock()
+			}
 		}
-		return b, nil
-	}
-	t.Unlock()
-
-	if t.readCh == nil {
-		return nil, ErrNotSet
+	case t.readCh != nil:
+		return t.readCh.Read()
 	}
 
-	return t.readCh.Read()
+	return nil, ErrNotSet
 }
 
 // Write writes the specified bytes to the transport.
