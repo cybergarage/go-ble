@@ -191,6 +191,9 @@ func (s *service) Open(opts ...ServiceTransportOption) (Transport, error) {
 		writeUUID:  NewNilUUID(),
 		notifyUUID: NewNilUUID(),
 	}
+	for _, opt := range opts {
+		opt(&uuids)
+	}
 
 	transportOpts := []TransportOption{}
 	if !uuids.readUUID.IsNil() {
