@@ -24,16 +24,16 @@ import (
 // Assigned Numbers | Bluetooth® Technology Website
 // https://www.bluetooth.com/specifications/assigned-numbers/
 //
-//go:embed data/company_identifiers.yaml
+//go:embed std/company_identifiers.yaml
 var companyIdentifiers []byte
 
-//go:embed data/service_uuids.yaml
+//go:embed std/service_uuids.yaml
 var serviceUUIDs []byte
 
-//go:embed data/sdo_uuids.yaml
+//go:embed std/sdo_uuids.yaml
 var sdoUUIDs []byte
 
-//go:embed data/characteristic_uuids.yaml
+//go:embed std/characteristic_uuids.yaml
 var characteristicUUIDs []byte
 
 // Database represents a Bluetooth database.
