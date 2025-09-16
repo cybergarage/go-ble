@@ -21,14 +21,19 @@ import (
 // UUID represents a Bluetooth UUID.
 type UUID = types.UUID
 
-// NewUUIDFromUUIDString creates a new UUID from the given UUID string.
-func NewUUIDFromUUIDString(s string) (UUID, error) {
+// NewUUIDFromString creates a new UUID from the given UUID string.
+func NewUUIDFromString(s string) (UUID, error) {
 	return types.NewUUIDFromString(s)
 }
 
-// MustUUIDFromUUIDString creates a UUID from a string representation and return nil UUID if it fails.
-func MustUUIDFromUUIDString(s string) UUID {
+// MustUUIDFromString creates a UUID from a string representation and return nil UUID if it fails.
+func MustUUIDFromString(s string) UUID {
 	return types.MustUUIDFromString(s)
+}
+
+// NewUUIDFromBytes creates a UUID from a byte slice.
+func NewUUIDFromBytes(b []byte) (UUID, error) {
+	return types.NewUUIDFromBytes(b)
 }
 
 // NewUUIDFromUUID16 creates a new UUID from the given 16-bit UUID.

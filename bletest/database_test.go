@@ -112,9 +112,9 @@ func TestEmbeddedDatabase(t *testing.T) {
 					UUID ble.UUID
 					Name string
 				}{
-					{UUID: ble.MustUUIDFromUUIDString("18EE2EF5-263D-4559-959F-4F9C429F9D11"), Name: "C1 (Client TX Buffer)"},
-					{UUID: ble.MustUUIDFromUUIDString("18EE2EF5-263D-4559-959F-4F9C429F9D12"), Name: "C2 (Client RX Buffer)"},
-					{UUID: ble.MustUUIDFromUUIDString("64630238-8772-45F2-B87D-748A83218F04"), Name: "C3 (Additional Commissioning Data)"},
+					{UUID: ble.MustUUIDFromString("18EE2EF5-263D-4559-959F-4F9C429F9D11"), Name: "C1 (Client TX Buffer)"},
+					{UUID: ble.MustUUIDFromString("18EE2EF5-263D-4559-959F-4F9C429F9D12"), Name: "C2 (Client RX Buffer)"},
+					{UUID: ble.MustUUIDFromString("64630238-8772-45F2-B87D-748A83218F04"), Name: "C3 (Additional Commissioning Data)"},
 				}
 				for _, tt := range charTests {
 					characteristic, ok := db.LookupCharacteristic(tt.UUID)

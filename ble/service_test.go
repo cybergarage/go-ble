@@ -46,8 +46,8 @@ func ExampleService_Open_matter() {
 		fmt.Printf("Matter device found: %s", dev.String())
 	}
 	service, _ := dev.LookupService(0xFFF6)
-	c1 := ble.MustUUIDFromUUIDString("18EE2EF5-263D-4559-959F-4F9C429F9D11")
-	c2 := ble.MustUUIDFromUUIDString("18EE2EF5-263D-4559-959F-4F9C429F9D12")
+	c1 := ble.MustUUIDFromString("18EE2EF5-263D-4559-959F-4F9C429F9D11")
+	c2 := ble.MustUUIDFromString("18EE2EF5-263D-4559-959F-4F9C429F9D12")
 	transport, err := service.Open(
 		ble.WithTransportReadUUID(c1),
 		ble.WithTransportNotifyUUID(c2),
