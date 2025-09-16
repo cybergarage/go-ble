@@ -128,9 +128,13 @@ func (dev *tinyDevice) LookupService(anyUUID any) (Service, bool) {
 				[]Characteristic{},
 			)
 			for _, tinyChar := range tinyChars {
+				uuid, err := NewUUIDFromString(tinyChar.UUID().String())
+				if err != nil {
+					continue
+				}
 				char := newCharacteristic(
 					service,
-					UUID(tinyChar.UUID()),
+					uuid,
 				)
 				service.addDeviceCharacteristic(char)
 			}
