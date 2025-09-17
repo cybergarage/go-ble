@@ -16,8 +16,15 @@ package ble
 
 import (
 	"context"
+	"time"
 )
 
+const (
+	// DefaultScanTimeout is the default duration for scanning.
+	DefaultScanTimeout = time.Duration(5 * time.Second)
+)
+
+// ScannerOption represents an option for the scanner.
 type ScannerOption any
 
 // OnScanResult is the callback function type for scan results.

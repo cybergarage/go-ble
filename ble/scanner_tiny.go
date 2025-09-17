@@ -43,6 +43,12 @@ func (s *tinyScanner) Devices() []Device {
 
 // Scan starts scanning for Bluetooth devices.
 func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, DefaultScanTimeout)
+		defer cancel()
+	}
+
 	onScanResults := []OnScanResult{}
 	for _, opt := range opts {
 		switch v := opt.(type) {
