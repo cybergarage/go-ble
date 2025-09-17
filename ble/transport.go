@@ -24,7 +24,7 @@ import (
 
 const (
 	// DefaultTransportTimeout is the default timeout for transport operations.
-	DefaultTransportTimeout = 10 * time.Second
+	DefaultTransportTimeout = 5 * time.Second
 )
 
 // TransportOption represents a function type to set transport options.
@@ -89,12 +89,12 @@ func NewTransport(opts ...TransportOption) Transport {
 // Open opens the transport for communication.
 func (t *transport) Open() error {
 	if t.notifyCh != nil {
-		fn := func(char Characteristic, buf []byte) {
+		notifyHandler := func(char Characteristic, buf []byte) {
 			t.Lock()
 			t.notifyBytes.PushBack(buf)
 			t.Unlock()
 		}
-		if err := t.notifyCh.Notify(fn); err != nil {
+		if err := t.notifyCh.Notify(notifyHandler); err != nil {
 			return err
 		}
 	}
@@ -134,6 +134,7 @@ func (t *transport) Read(ctx context.Context) ([]byte, error) {
 				}
 				t.Unlock()
 			}
+			time.Sleep(100 * time.Millisecond)
 		}
 	case t.readCh != nil:
 		return t.readCh.Read()
