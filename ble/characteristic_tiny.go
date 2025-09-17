@@ -48,7 +48,11 @@ func (char *tinyCharacteristic) Write(data []byte) (int, error) {
 	if char.tinyChar == nil {
 		return 0, ErrNotConnected
 	}
-	return char.tinyChar.WriteWithoutResponse(data)
+	nWrote, err := char.tinyChar.Write(data)
+	if err != nil {
+		return nWrote, err
+	}
+	return nWrote, nil
 }
 
 // Notify subscribes to characteristic notifications.
