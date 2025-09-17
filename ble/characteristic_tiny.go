@@ -43,18 +43,6 @@ func (char *tinyCharacteristic) Read() ([]byte, error) {
 	return char.readBuf[:n], nil
 }
 
-// Write writes the characteristic value.
-func (char *tinyCharacteristic) Write(data []byte) (int, error) {
-	if char.tinyChar == nil {
-		return 0, ErrNotConnected
-	}
-	nWrote, err := char.tinyChar.WriteWithoutResponse(data)
-	if err != nil {
-		return nWrote, err
-	}
-	return nWrote, nil
-}
-
 // Notify subscribes to characteristic notifications.
 func (char *tinyCharacteristic) Notify(callback OnCharacteristicNotification) error {
 	if char.tinyChar == nil {
