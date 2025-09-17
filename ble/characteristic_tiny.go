@@ -48,7 +48,7 @@ func (char *tinyCharacteristic) Write(data []byte) (int, error) {
 	if char.tinyChar == nil {
 		return 0, ErrNotConnected
 	}
-	nWrote, err := char.tinyChar.Write(data)
+	nWrote, err := char.tinyChar.WriteWithoutResponse(data)
 	if err != nil {
 		return nWrote, err
 	}
