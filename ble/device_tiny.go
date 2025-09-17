@@ -132,9 +132,10 @@ func (dev *tinyDevice) LookupService(anyUUID any) (Service, bool) {
 				if err != nil {
 					continue
 				}
-				char := newCharacteristic(
+				char := newTinyCharacteristic(
 					service,
 					uuid,
+					&tinyChar,
 				)
 				service.addDeviceCharacteristic(char)
 			}
