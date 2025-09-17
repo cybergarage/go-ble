@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package vendor
+package ext
 
 import (
 	"github.com/cybergarage/go-ble/ble/types"

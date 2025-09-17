@@ -17,7 +17,7 @@ package db
 import (
 	_ "embed"
 
-	"github.com/cybergarage/go-ble/ble/db/vendor"
+	"github.com/cybergarage/go-ble/ble/db/ext"
 	"gopkg.in/yaml.v2"
 )
 
@@ -154,7 +154,7 @@ func (db *database) LookupCharacteristic(uuid UUID) (Characteristic, bool) {
 	if ok {
 		return char, true
 	}
-	char, ok = vendor.DefaultDatabase().LookupCharacteristic(uuid)
+	char, ok = ext.DefaultDatabase().LookupCharacteristic(uuid)
 	if ok {
 		return char, true
 	}
