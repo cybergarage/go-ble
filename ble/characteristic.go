@@ -54,6 +54,8 @@ type CharacteristicOperator interface {
 	Read() ([]byte, error)
 	// Write writes the characteristic value.
 	Write([]byte) (int, error)
+	// WriteWithoutResponse writes the characteristic value without waiting for a response.
+	WriteWithoutResponse([]byte) (int, error)
 	// Notify subscribes to characteristic notifications.
 	Notify(OnCharacteristicNotification) error
 }
