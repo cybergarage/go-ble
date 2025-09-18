@@ -96,16 +96,6 @@ func NewTransport(opts ...TransportOption) Transport {
 
 // Open opens the transport for communication.
 func (t *transport) Open() error {
-	if t.notifyCh != nil {
-		notifyHandler := func(char Characteristic, buf []byte) {
-			t.Lock()
-			t.notifyBytes.PushBack(buf)
-			t.Unlock()
-		}
-		if err := t.notifyCh.Notify(notifyHandler); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -149,6 +139,16 @@ func (t *transport) Read(ctx context.Context) ([]byte, error) {
 	switch {
 	case t.notifyCh != nil:
 		for {
+			notifyHandler := func(char Characteristic, buf []byte) {
+				t.Lock()
+				t.notifyBytes.PushBack(buf)
+				t.Unlock()
+			}
+
+			if err := t.notifyCh.Notify(notifyHandler); err != nil {
+				return nil, err
+			}
+
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
