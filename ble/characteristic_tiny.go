@@ -16,6 +16,7 @@ package ble
 
 import (
 	"fmt"
+	"time"
 
 	"tinygo.org/x/bluetooth"
 )
@@ -56,6 +57,7 @@ func (char *tinyCharacteristic) WriteWithoutResponse(data []byte) (int, error) {
 	if err != nil {
 		return nWrote, fmt.Errorf("%w: %s", err, char.String())
 	}
+	time.Sleep(defaultCharacteristicWriteWithoutResponseWait)
 	return nWrote, nil
 }
 

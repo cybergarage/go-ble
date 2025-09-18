@@ -18,6 +18,7 @@ package ble
 
 import (
 	"fmt"
+	"time"
 )
 
 // Write writes the characteristic value.
@@ -29,5 +30,6 @@ func (char *tinyCharacteristic) Write(data []byte) (int, error) {
 	if err != nil {
 		return nWrote, fmt.Errorf("%w: %s", err, char.String())
 	}
+	time.Sleep(defaultCharacteristicWriteWithoutResponseWait)
 	return nWrote, nil
 }

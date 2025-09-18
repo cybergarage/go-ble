@@ -17,8 +17,13 @@ package ble
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/cybergarage/go-ble/ble/db"
+)
+
+const (
+	defaultCharacteristicWriteWithoutResponseWait = time.Duration(500 * time.Millisecond)
 )
 
 // OnCharacteristicNotification represents a callback function to be called when a notification is received.
