@@ -36,6 +36,12 @@ type Transport interface {
 	Open() error
 	// Close closes the transport and releases resources.
 	Close() error
+	// WriterCharacteristic returns the characteristic used for writing data.
+	WriteCharacteristic() (Characteristic, error)
+	// ReadCharacteristic returns the characteristic used for reading data.
+	ReadCharacteristic() (Characteristic, error)
+	// NotifyCharacteristic returns the characteristic used for notifications.
+	NotifyCharacteristic() (Characteristic, error)
 	// Read reads bytes from the transport.
 	Read(ctx context.Context) ([]byte, error)
 	// Write writes the specified bytes to the transport.
@@ -106,6 +112,30 @@ func (t *transport) Open() error {
 // Close closes the transport and releases resources.
 func (t *transport) Close() error {
 	return nil
+}
+
+// WriteCharacteristic returns the characteristic used for writing data.
+func (t *transport) WriteCharacteristic() (Characteristic, error) {
+	if t.writeCh == nil {
+		return nil, ErrNotSet
+	}
+	return t.writeCh, nil
+}
+
+// ReadCharacteristic returns the characteristic used for reading data.
+func (t *transport) ReadCharacteristic() (Characteristic, error) {
+	if t.readCh == nil {
+		return nil, ErrNotSet
+	}
+	return t.readCh, nil
+}
+
+// NotifyCharacteristic returns the characteristic used for notifications.
+func (t *transport) NotifyCharacteristic() (Characteristic, error) {
+	if t.notifyCh == nil {
+		return nil, ErrNotSet
+	}
+	return t.notifyCh, nil
 }
 
 // Read reads bytes from the transport.
