@@ -14,7 +14,11 @@
 
 package ble
 
-import "tinygo.org/x/bluetooth"
+import (
+	"fmt"
+
+	"tinygo.org/x/bluetooth"
+)
 
 // nolint: staticcheck
 type tinyCharacteristic struct {
@@ -34,11 +38,11 @@ func newTinyCharacteristic(service Service, uuid UUID, char *bluetooth.DeviceCha
 // Read reads the characteristic value.
 func (char *tinyCharacteristic) Read() ([]byte, error) {
 	if char.tinyChar == nil {
-		return nil, ErrNotConnected
+		return nil, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
 	}
 	n, err := char.tinyChar.Read(char.readBuf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", err, char.String())
 	}
 	return char.readBuf[:n], nil
 }
@@ -46,7 +50,7 @@ func (char *tinyCharacteristic) Read() ([]byte, error) {
 // Notify subscribes to characteristic notifications.
 func (char *tinyCharacteristic) Notify(callback OnCharacteristicNotification) error {
 	if char.tinyChar == nil {
-		return ErrNotConnected
+		return fmt.Errorf("%w: %s", ErrNotConnected, char.String())
 	}
 	tinyCallback := func(buf []byte) {
 		if callback == nil {

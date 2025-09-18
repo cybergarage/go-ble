@@ -16,14 +16,18 @@
 
 package ble
 
+import (
+	"fmt"
+)
+
 // Write writes the characteristic value.
 func (char *tinyCharacteristic) Write(data []byte) (int, error) {
 	if char.tinyChar == nil {
-		return 0, ErrNotConnected
+		return 0, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
 	}
 	nWrote, err := char.tinyChar.Write(data)
 	if err != nil {
-		return nWrote, err
+		return nWrote, fmt.Errorf("%w: %s", err, char.String())
 	}
 	return nWrote, nil
 }

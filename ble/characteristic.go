@@ -16,6 +16,7 @@ package ble
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/cybergarage/go-ble/ble/db"
 )
@@ -97,17 +98,17 @@ func (char *characteristic) ID() string {
 
 // Read reads the characteristic value.
 func (char *characteristic) Read() ([]byte, error) {
-	return nil, ErrNotConnected
+	return nil, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
 }
 
 // Write writes the characteristic value.
 func (char *characteristic) Write(data []byte) (int, error) {
-	return 0, ErrNotConnected
+	return 0, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
 }
 
 // Notify subscribes to characteristic notifications.
 func (char *characteristic) Notify(callback OnCharacteristicNotification) error {
-	return ErrNotConnected
+	return fmt.Errorf("%w: %s", ErrNotConnected, char.String())
 }
 
 func (char *characteristic) MarshalObject() any {
