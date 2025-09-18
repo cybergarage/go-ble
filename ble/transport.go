@@ -40,6 +40,8 @@ type Transport interface {
 	Read(ctx context.Context) ([]byte, error)
 	// Write writes the specified bytes to the transport.
 	Write(ctx context.Context, data []byte) (int, error)
+	// WriteWithoutResponse writes the specified bytes to the transport without waiting for a response.
+	WriteWithoutResponse(ctx context.Context, data []byte) (int, error)
 }
 
 type transport struct {
@@ -149,4 +151,12 @@ func (t *transport) Write(ctx context.Context, data []byte) (int, error) {
 		return 0, ErrNotSet
 	}
 	return t.writeCh.Write(data)
+}
+
+// WriteWithoutResponse writes the specified bytes to the transport without waiting for a response.
+func (t *transport) WriteWithoutResponse(ctx context.Context, data []byte) (int, error) {
+	if t.writeCh == nil {
+		return 0, ErrNotSet
+	}
+	return t.writeCh.WriteWithoutResponse(data)
 }
