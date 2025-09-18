@@ -47,6 +47,18 @@ func (char *tinyCharacteristic) Read() ([]byte, error) {
 	return char.readBuf[:n], nil
 }
 
+// WriteWithoutResponse writes the characteristic value without response.
+func (char *tinyCharacteristic) WriteWithoutResponse(data []byte) (int, error) {
+	if char.tinyChar == nil {
+		return 0, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
+	}
+	nWrote, err := char.tinyChar.WriteWithoutResponse(data)
+	if err != nil {
+		return nWrote, fmt.Errorf("%w: %s", err, char.String())
+	}
+	return nWrote, nil
+}
+
 // Notify subscribes to characteristic notifications.
 func (char *tinyCharacteristic) Notify(callback OnCharacteristicNotification) error {
 	if char.tinyChar == nil {
