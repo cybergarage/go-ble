@@ -98,8 +98,10 @@ func NewTransport(opts ...TransportOption) Transport {
 func (t *transport) Open() error {
 	if t.notifyCh != nil {
 		notifyHandler := func(char Characteristic, buf []byte) {
+			data := make([]byte, len(buf))
+			copy(data, buf)
 			t.Lock()
-			t.notifyBytes.PushBack(buf)
+			t.notifyBytes.PushBack(data)
 			t.Unlock()
 		}
 		if err := t.notifyCh.Notify(notifyHandler); err != nil {
