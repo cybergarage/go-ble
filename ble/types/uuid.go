@@ -79,7 +79,7 @@ func NewUUIDFromUUID16(u16 uint16) UUID {
 	}
 }
 
-// NewUUIDFromUUID16 creates a UUID from a 32-bit UUID.
+// NewUUIDFromUUID32 creates a UUID from a 32-bit UUID.
 func NewUUIDFromUUID32(u32 uint32) UUID {
 	return UUID{
 		baseUUID[0],
