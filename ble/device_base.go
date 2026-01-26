@@ -52,8 +52,9 @@ func (baseDev *baseDevice) LastSeenAt() time.Time {
 
 // String returns a string representation of the device.
 func (baseDev *baseDevice) StringFrom(dev Device) string {
-	services := []string{}
-	for _, s := range dev.Services() {
+	devServices := dev.Services()
+	services := make([]string, 0, len(devServices))
+	for _, s := range devServices {
 		services = append(services, s.String())
 	}
 	return fmt.Sprintf("Device[Address: %s, LocalName: %s, Manufacturer: %s, RSSI: %d, Services: (%s)]",

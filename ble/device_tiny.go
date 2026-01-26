@@ -208,8 +208,9 @@ func (dev *tinyDevice) IsConnected() bool {
 
 // MarshalObject returns an object suitable for marshaling to JSON.
 func (dev *tinyDevice) MarshalObject() any {
-	serviceObjs := []any{}
-	for _, service := range dev.Services() {
+	devServices := dev.Services()
+	serviceObjs := make([]any, 0, len(devServices))
+	for _, service := range devServices {
 		serviceObjs = append(serviceObjs, service.MarshalObject())
 	}
 	return struct {
