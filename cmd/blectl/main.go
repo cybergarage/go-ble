@@ -20,7 +20,6 @@ import (
 
 	"github.com/cybergarage/go-ble/ble"
 	"github.com/cybergarage/go-ble/ble/cmd"
-	"github.com/cybergarage/go-logger/log"
 )
 
 func main() {
@@ -28,5 +27,4 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	log.EnableStdoutDebug(true)
 }
