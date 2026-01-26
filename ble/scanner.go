@@ -27,8 +27,8 @@ const (
 // ScannerOption represents an option for the scanner.
 type ScannerOption any
 
-// OnScanResult is the callback function type for scan results.
-type OnScanResult func(Device)
+// ScanHandler defines a handler function for scan results.
+type ScanHandler func(Device)
 
 // Scanner defines the interface for a Bluetooth scanner.
 type Scanner interface {

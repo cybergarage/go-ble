@@ -49,11 +49,11 @@ func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 		defer cancel()
 	}
 
-	onScanResults := []OnScanResult{}
+	scanHandlers := []ScanHandler{}
 	for _, opt := range opts {
 		switch v := opt.(type) {
-		case OnScanResult:
-			onScanResults = append(onScanResults, v)
+		case ScanHandler:
+			scanHandlers = append(scanHandlers, v)
 		}
 	}
 	err := defaultAdapter().Enable()
@@ -69,23 +69,23 @@ func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 			now := time.Now()
 			addrKey := scanRes.Address.String()
 			scanDev := newDeviceFromScanResult(scanRes)
-			discoverdDev, ok := s.devices[addrKey]
+			discoveredDev, ok := s.devices[addrKey]
 			if ok {
-				discoverdDev.lastSeenAt = now
-				discoverdDev.rssi = scanDev.RSSI()
+				discoveredDev.lastSeenAt = now
+				discoveredDev.rssi = scanDev.RSSI()
 				for _, scanService := range scanDev.Services() {
-					if _, ok := discoverdDev.LookupService(scanService.UUID()); !ok {
-						discoverdDev.addService(scanService)
-						discoverdDev.modifiedAt = now
+					if _, ok := discoveredDev.LookupService(scanService.UUID()); !ok {
+						discoveredDev.addService(scanService)
+						discoveredDev.modifiedAt = now
 					}
 				}
 			} else {
 				s.devices[addrKey] = scanDev
-				discoverdDev = scanDev
+				discoveredDev = scanDev
 			}
 
-			for _, onScanResult := range onScanResults {
-				onScanResult(discoverdDev)
+			for _, scanHandler := range scanHandlers {
+				scanHandler(discoveredDev)
 			}
 		}
 	})

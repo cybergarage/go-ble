@@ -41,7 +41,7 @@ var scanCmd = &cobra.Command{ // nolint:exhaustruct
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		err := central.Scan(ctx, ble.OnScanResult(func(dev ble.Device) {
+		err := central.Scan(ctx, ble.ScanHandler(func(dev ble.Device) {
 			log.Infof("Device found: %s", dev.String())
 		}))
 		if err != nil {

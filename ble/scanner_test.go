@@ -30,7 +30,7 @@ func ExampleScanner() {
 	defer cancel()
 
 	err := scanner.Scan(ctx,
-		ble.OnScanResult(func(dev ble.Device) {
+		ble.ScanHandler(func(dev ble.Device) {
 			log.Infof("Device found: dev=%s", dev.String())
 		}))
 	if err != nil {
