@@ -12,7 +12,7 @@
 ```
 
 * [blelookup doc]()	 - Generate markdown documentation to stdout
-* [blelookup scan]()	 - Scan for Matter devices.
+* [blelookup scan]()	 - Scan for BLE devices.
 
 ## blelookup completion
 
@@ -297,11 +297,11 @@ blelookup help [command] [flags]
 
 ## blelookup scan
 
-Scan for Matter devices.
+Scan for BLE devices.
 
 ### Synopsis
 
-Scan for Matter devices.
+Scan for BLE (Bluetooth Low Energy) devices.
 
 ```
 blelookup scan [flags]
