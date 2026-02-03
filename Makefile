@@ -41,12 +41,13 @@ TEST_PKG=${MODULE_ROOT}/${TEST_PKG_DIR}
 
 BIN_SRC_DIR=cmd
 BIN_ID=${MODULE_ROOT}/${BIN_SRC_DIR}
-BIN_CLI=${PKG_NAME}lookup
-BIN_CLI_ID=${BIN_ID}/${BIN_CLI}
+BIN_LOOKUP=${PKG_NAME}lookup
 BIN_SRCS=\
-		${BIN_SRC_DIR}/${BIN_CLI}
+		${BIN_SRC_DIR}/${BIN_LOOKUP}
 BINS=\
-		${BIN_CLI_ID}
+		${BIN_ID}/${BIN_LOOKUP}
+
+DOCS_ROOT_DIR=doc
 
 .PHONY: format vet lint clean
 .IGNORE: lint
@@ -99,6 +100,9 @@ build:
 
 install:
 	go install -v -gcflags=${GCFLAGS} -ldflags=${LDFLAGS} ${BINS}
+	${GOBIN}/${BIN_LOOKUP} doc > ${DOCS_ROOT_DIR}/${BIN_LOOKUP}.md
+	@git diff --quiet -- ${DOCS_ROOT_DIR}/${BIN_LOOKUP}.md || \
+		git commit ${DOCS_ROOT_DIR}/${BIN_LOOKUP}.md -m "docs: update ${BIN_LOOKUP} command reference"
 
 clean:
 	go clean -i ${PKG}
