@@ -29,8 +29,8 @@ func init() {
 
 var scanCmd = &cobra.Command{ // nolint:exhaustruct
 	Use:   "scan",
-	Short: "Scan for Matter devices.",
-	Long:  "Scan for Matter devices.",
+	Short: "Scan for BLE devices.",
+	Long:  "Scan for BLE (Bluetooth Low Energy) devices.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := log.Default()
 		if logger == nil {
@@ -53,10 +53,6 @@ var scanCmd = &cobra.Command{ // nolint:exhaustruct
 			log.Fatalf("Failed to scan: %v", err)
 		}
 
-		log.Infof("Discovered devices:")
-		for n, dev := range central.Devices() {
-			log.Infof("[%d] %s", n, dev.String())
-		}
 		return nil
 	},
 }
