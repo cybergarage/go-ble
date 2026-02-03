@@ -20,13 +20,12 @@ import (
 
 	"github.com/cybergarage/go-ble/ble"
 	"github.com/cybergarage/go-logger/log"
-	"github.com/cybergarage/go-matter/matter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 const (
-	ProgramName     = "matterctl"
+	ProgramName     = "blelookup"
 	FormatParamStr  = "format"
 	VerboseParamStr = "verbose"
 	DebugParamStr   = "debug"
@@ -51,7 +50,7 @@ var rootCmd = &cobra.Command{ // nolint:exhaustruct
 			} else {
 				log.SetDefault(log.NewStdoutLogger(log.LevelInfo))
 			}
-			log.Infof("%s version %s", ProgramName, matter.Version)
+			log.Infof("%s version %s", ProgramName, ble.Version)
 			log.Infof("verbose:%t, debug:%t", verbose, debug)
 		}
 		return nil
@@ -76,20 +75,20 @@ func Execute(commissioner ble.Central) error {
 }
 
 func init() {
-	viper.SetEnvPrefix("matter_ctl")
+	viper.SetEnvPrefix("BLE_LOOKUP")
 
 	viper.SetDefault(FormatParamStr, FormatTableStr)
 	rootCmd.PersistentFlags().String(FormatParamStr, FormatTableStr, fmt.Sprintf("output format: %s", strings.Join(allSupportedFormats(), "|")))
 	viper.BindPFlag(FormatParamStr, rootCmd.PersistentFlags().Lookup(FormatParamStr))
-	viper.BindEnv(FormatParamStr) // MATTER_CTL_FORMAT
+	viper.BindEnv(FormatParamStr) // BLE_LOOKUP_FORMAT
 
 	viper.SetDefault(VerboseParamStr, false)
 	rootCmd.PersistentFlags().Bool((VerboseParamStr), false, "enable verbose output")
 	viper.BindPFlag(VerboseParamStr, rootCmd.PersistentFlags().Lookup(VerboseParamStr))
-	viper.BindEnv(VerboseParamStr) // MATTER_CTL_VERBOSE
+	viper.BindEnv(VerboseParamStr) // BLE_LOOKUP_VERBOSE
 
 	viper.SetDefault(DebugParamStr, false)
 	rootCmd.PersistentFlags().Bool((DebugParamStr), false, "enable debug output")
 	viper.BindPFlag(DebugParamStr, rootCmd.PersistentFlags().Lookup(DebugParamStr))
-	viper.BindEnv(DebugParamStr) // MATTER_CTL_DEBUG
+	viper.BindEnv(DebugParamStr) // BLE_LOOKUP_DEBUG
 }
