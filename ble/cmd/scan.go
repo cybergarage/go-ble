@@ -32,6 +32,11 @@ var scanCmd = &cobra.Command{ // nolint:exhaustruct
 	Short: "Scan for Matter devices.",
 	Long:  "Scan for Matter devices.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		logger := log.Default()
+		if logger == nil {
+			log.SetDefault(log.NewStdoutLogger(log.LevelInfo))
+		}
+
 		// format, err := NewFormatFromString(viper.GetString(FormatParamStr))
 		// if err != nil {
 		// 	return err
