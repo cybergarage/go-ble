@@ -11,3 +11,12 @@ go-ble is likely a Go (Golang) library or project focused on Bluetooth Low Energ
 **Note:** 🌱 This is a spare-time hobby project, so progress may be slow and changes may appear irregular. Thank you for your patience 🙂
 
 This project is based on [tinygo.org/x/bluetooth](https://tinygo.org/x/bluetooth), a well-known Bluetooth Low Energy (BLE) library for Go. The goal of go-ble is to provide a simpler and more user-friendly interface for BLE development in Go, making it easier for developers to build BLE applications without deep knowledge of the underlying Bluetooth stack.
+
+# User Guides
+
+- Operation
+  - [blelookup](doc/blelookup.md)
+
+# References
+
+- [tinygo.org/x/bluetooth](https://tinygo.org/x/bluetooth)
