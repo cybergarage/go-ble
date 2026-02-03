@@ -3,7 +3,7 @@ module github.com/cybergarage/go-ble
 go 1.25
 
 require (
-	github.com/cybergarage/go-logger v1.3.11
+	github.com/cybergarage/go-logger v1.3.12
 	github.com/cybergarage/go-matter v0.0.0-20260121032825-ad552ab3bb98
 	github.com/cybergarage/go-safecast v1.3.5
 	github.com/google/uuid v1.6.0
