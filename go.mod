@@ -4,7 +4,6 @@ go 1.25
 
 require (
 	github.com/cybergarage/go-logger v1.3.12
-	github.com/cybergarage/go-matter v0.0.0-20260121032825-ad552ab3bb98
 	github.com/cybergarage/go-safecast v1.3.5
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.10.2
@@ -14,7 +13,6 @@ require (
 )
 
 require (
-	github.com/cybergarage/go-mdns v0.0.0-20251214065712-090f0440eecd // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
