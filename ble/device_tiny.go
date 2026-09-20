@@ -16,12 +16,41 @@ package ble
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"sync"
 	"time"
 
 	"tinygo.org/x/bluetooth"
 )
+
+// tinygo.org/x/bluetooth's UUID stores its four 32-bit words in the reverse
+// order of this package's own UUID (id[0] holds the *last* 4 bytes of the
+// standard big-endian UUID, not the first). Before tinygo-bluetooth v0.15,
+// both types were plain [4]uint32 arrays with this same reversed layout, so a
+// direct array conversion transparently preserved it. v0.15 wrapped tinygo's
+// array in an opaque struct, so that conversion no longer compiles; these
+// helpers reconstruct the same word-for-word (not byte-standard) mapping via
+// the BytesBigEndian/NewUUID accessors, so UUID equality against constants
+// such as MatterServiceUUID keeps working exactly as before.
+func uuidFromTinygo(u bluetooth.UUID) UUID {
+	b := u.BytesBigEndian()
+	return UUID{
+		binary.BigEndian.Uint32(b[12:16]),
+		binary.BigEndian.Uint32(b[8:12]),
+		binary.BigEndian.Uint32(b[4:8]),
+		binary.BigEndian.Uint32(b[0:4]),
+	}
+}
+
+func uuidToTinygo(u UUID) bluetooth.UUID {
+	var b [16]byte
+	binary.BigEndian.PutUint32(b[0:4], u[3])
+	binary.BigEndian.PutUint32(b[4:8], u[2])
+	binary.BigEndian.PutUint32(b[8:12], u[1])
+	binary.BigEndian.PutUint32(b[12:16], u[0])
+	return bluetooth.NewUUID(b)
+}
 
 type tinyDevice struct {
 	*baseDevice
@@ -104,12 +133,12 @@ func (dev *tinyDevice) LookupService(anyUUID any) (Service, bool) {
 	}
 
 	// If connected, discover services from the device using the Bluetooth API.
-	tinyServices, err := dev.tinyDev.DiscoverServices([]bluetooth.UUID{bluetooth.UUID(lookupUUID)})
+	tinyServices, err := dev.tinyDev.DiscoverServices([]bluetooth.UUID{uuidToTinygo(lookupUUID)})
 	if err != nil {
 		return nil, false
 	}
 	for _, tinyService := range tinyServices {
-		tinyServiceUUID := UUID(tinyService.UUID())
+		tinyServiceUUID := uuidFromTinygo(tinyService.UUID())
 		if lookupUUID.Equal(tinyServiceUUID) {
 			tinyChars, err := tinyService.DiscoverCharacteristics(nil)
 			if err != nil {
@@ -148,7 +177,7 @@ func (dev *tinyDevice) LookupService(anyUUID any) (Service, bool) {
 func (dev *tinyDevice) addServiceDataElement(sd bluetooth.ServiceDataElement) {
 	service := newService(
 		dev,
-		UUID(sd.UUID),
+		uuidFromTinygo(sd.UUID),
 		sd.Data,
 		[]Characteristic{}, // No characteristics in scan result
 	)
