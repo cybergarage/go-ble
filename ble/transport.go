@@ -34,6 +34,13 @@ type TransportOption func(*transport)
 type Transport interface {
 	// Open opens the transport for communication.
 	Open() error
+	// Subscribe enables notifications/indications on the notify
+	// characteristic, if one was configured. It is separate from Open so
+	// callers can control whether it happens before or after an initial
+	// write: some peripherals only deliver a response to an initial write
+	// once they observe the client enabling notifications afterwards, and
+	// never flush it if notifications were already enabled beforehand.
+	Subscribe() error
 	// Close closes the transport and releases resources.
 	Close() error
 	// WriterCharacteristic returns the characteristic used for writing data.
@@ -96,19 +103,22 @@ func NewTransport(opts ...TransportOption) Transport {
 
 // Open opens the transport for communication.
 func (t *transport) Open() error {
-	if t.notifyCh != nil {
-		notifyHandler := func(char Characteristic, buf []byte) {
-			data := make([]byte, len(buf))
-			copy(data, buf)
-			t.Lock()
-			t.notifyBytes.PushBack(data)
-			t.Unlock()
-		}
-		if err := t.notifyCh.Notify(notifyHandler); err != nil {
-			return err
-		}
-	}
 	return nil
+}
+
+// Subscribe enables notifications/indications on the notify characteristic.
+func (t *transport) Subscribe() error {
+	if t.notifyCh == nil {
+		return nil
+	}
+	notifyHandler := func(char Characteristic, buf []byte) {
+		data := make([]byte, len(buf))
+		copy(data, buf)
+		t.Lock()
+		t.notifyBytes.PushBack(data)
+		t.Unlock()
+	}
+	return t.notifyCh.Notify(notifyHandler)
 }
 
 // Close closes the transport and releases resources.
