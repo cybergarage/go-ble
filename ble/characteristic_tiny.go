@@ -72,5 +72,8 @@ func (char *tinyCharacteristic) Notify(callback OnCharacteristicNotification) er
 		}
 		callback(char, buf)
 	}
-	return char.tinyChar.EnableNotifications(tinyCallback)
+	if err := char.tinyChar.EnableNotifications(tinyCallback); err != nil {
+		return fmt.Errorf("%w: %s", err, char.String())
+	}
+	return nil
 }
