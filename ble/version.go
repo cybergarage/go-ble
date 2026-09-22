@@ -15,5 +15,5 @@
 package ble
 
 const (
-	Version = "v0.9.0"
+	Version = "..1"
 )
