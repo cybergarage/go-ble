@@ -36,6 +36,22 @@ func newTinyCharacteristic(service Service, uuid UUID, char *bluetooth.DeviceCha
 	}
 }
 
+// MTU returns the ATT maximum transmission unit of the connection.
+//
+// A Bluetooth stack negotiates the MTU when a connection is established, so the
+// value is known only while the device is connected. Sizing the payloads by it
+// avoids a write which the peer cannot accept.
+func (char *tinyCharacteristic) MTU() (int, error) {
+	if char.tinyChar == nil {
+		return 0, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
+	}
+	mtu, err := char.tinyChar.GetMTU()
+	if err != nil {
+		return 0, fmt.Errorf("%w: %s", err, char.String())
+	}
+	return int(mtu), nil
+}
+
 // Read reads the characteristic value.
 func (char *tinyCharacteristic) Read() ([]byte, error) {
 	if char.tinyChar == nil {

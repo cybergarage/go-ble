@@ -55,6 +55,10 @@ type CharacteristicDescriptor interface {
 
 // CharacteristicOperator represents operations that can be performed on a Bluetooth Characteristic.
 type CharacteristicOperator interface {
+	// MTU returns the ATT maximum transmission unit of the connection which
+	// the characteristic belongs to. The largest value which a single write
+	// can carry is MTU - 3, because the ATT write header takes three bytes.
+	MTU() (int, error)
 	// Read reads the characteristic value.
 	Read() ([]byte, error)
 	// Write writes the characteristic value.
@@ -103,6 +107,11 @@ func (char *characteristic) ID() string {
 	return char.Id
 }
 
+// MTU returns the ATT maximum transmission unit of the connection.
+func (char *characteristic) MTU() (int, error) {
+	return 0, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
+}
+
 // Read reads the characteristic value.
 func (char *characteristic) Read() ([]byte, error) {
 	return nil, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
@@ -110,6 +119,12 @@ func (char *characteristic) Read() ([]byte, error) {
 
 // Write writes the characteristic value.
 func (char *characteristic) Write(data []byte) (int, error) {
+	return 0, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
+}
+
+// WriteWithoutResponse writes the characteristic value without waiting for a
+// response.
+func (char *characteristic) WriteWithoutResponse(data []byte) (int, error) {
 	return 0, fmt.Errorf("%w: %s", ErrNotConnected, char.String())
 }
 

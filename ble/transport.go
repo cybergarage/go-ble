@@ -15,16 +15,21 @@
 package ble
 
 import (
-	"container/list"
 	"context"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/cybergarage/go-logger/log"
 )
 
 const (
 	// DefaultTransportTimeout is the default timeout for transport operations.
 	DefaultTransportTimeout = 5 * time.Second
+	// DefaultTransportNotifyBufferSize is the number of the notifications
+	// which are buffered before they are read. A notification is dropped
+	// when the buffer is full, because blocking the callback of the
+	// Bluetooth stack would stall the connection.
+	DefaultTransportNotifyBufferSize = 256
 )
 
 // TransportOption represents a function type to set transport options.
@@ -49,6 +54,9 @@ type Transport interface {
 	ReadCharacteristic() (Characteristic, error)
 	// NotifyCharacteristic returns the characteristic used for notifications.
 	NotifyCharacteristic() (Characteristic, error)
+	// MTU returns the ATT maximum transmission unit of the connection. The
+	// largest payload of a single write is MTU - 3.
+	MTU() (int, error)
 	// Read reads bytes from the transport.
 	Read(ctx context.Context) ([]byte, error)
 	// Write writes the specified bytes to the transport.
@@ -58,8 +66,9 @@ type Transport interface {
 }
 
 type transport struct {
-	sync.Mutex
-	notifyBytes *list.List
+	mutex       sync.Mutex
+	closed      bool
+	notifyBytes chan []byte
 	readCh      Characteristic
 	writeCh     Characteristic
 	notifyCh    Characteristic
@@ -89,8 +98,9 @@ func WithTransportNotifyCharacteristic(char Characteristic) TransportOption {
 // NewTransport returns a new Transport instance.
 func NewTransport(opts ...TransportOption) Transport {
 	t := &transport{
-		Mutex:       sync.Mutex{},
-		notifyBytes: list.New(),
+		mutex:       sync.Mutex{},
+		closed:      false,
+		notifyBytes: make(chan []byte, DefaultTransportNotifyBufferSize),
 		readCh:      nil,
 		writeCh:     nil,
 		notifyCh:    nil,
@@ -114,16 +124,42 @@ func (t *transport) Subscribe() error {
 	notifyHandler := func(char Characteristic, buf []byte) {
 		data := make([]byte, len(buf))
 		copy(data, buf)
-		t.Lock()
-		t.notifyBytes.PushBack(data)
-		t.Unlock()
+
+		t.mutex.Lock()
+		closed := t.closed
+		t.mutex.Unlock()
+		if closed {
+			return
+		}
+
+		// The notification is buffered without blocking, because this
+		// handler is called from the Bluetooth stack.
+		select {
+		case t.notifyBytes <- data:
+		default:
+			log.Warnf("ble: notification dropped (%d bytes): the transport buffer of %s is full", len(data), char.UUID().String())
+		}
 	}
 	return t.notifyCh.Notify(notifyHandler)
 }
 
 // Close closes the transport and releases resources.
 func (t *transport) Close() error {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.closed = true
 	return nil
+}
+
+// MTU returns the ATT maximum transmission unit of the connection.
+func (t *transport) MTU() (int, error) {
+	for _, char := range []Characteristic{t.writeCh, t.notifyCh, t.readCh} {
+		if char == nil {
+			continue
+		}
+		return char.MTU()
+	}
+	return 0, ErrNotSet
 }
 
 // WriteCharacteristic returns the characteristic used for writing data.
@@ -160,25 +196,13 @@ func (t *transport) Read(ctx context.Context) ([]byte, error) {
 
 	switch {
 	case t.notifyCh != nil:
-		for {
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			default:
-				t.Lock()
-				if 0 < t.notifyBytes.Len() {
-					elem := t.notifyBytes.Front()
-					t.notifyBytes.Remove(elem)
-					t.Unlock()
-					b, ok := elem.Value.([]byte)
-					if !ok {
-						return nil, fmt.Errorf("%w type: %T", ErrInvalid, elem.Value)
-					}
-					return b, nil
-				}
-				t.Unlock()
-			}
-			time.Sleep(100 * time.Millisecond)
+		// The notifications are awaited on the channel instead of being
+		// polled, so a response is returned as soon as it arrives.
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case data := <-t.notifyBytes:
+			return data, nil
 		}
 	case t.readCh != nil:
 		return t.readCh.Read()
