@@ -42,6 +42,7 @@ go-ble is a **central (client)** library. It scans for the devices which are adv
 - Long writes, and splitting a payload larger than the MTU
 - Discovering all the services of a connected device: a service is looked up by its UUID
 - Expiring a device which has stopped advertising
+- Stopping the adapter the moment a scan is cancelled: `Scan` returns as soon as its context is done, but the adapter stops scanning when the next advertisement arrives, because [tinygo.org/x/bluetooth](https://tinygo.org/x/bluetooth) supports `StopScan` only from inside the scan callback
 
 ## Supported platforms
 

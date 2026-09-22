@@ -94,7 +94,20 @@ func (s *tinyScanner) updateDevice(scanDev *tinyDevice) *tinyDevice {
 	return discoveredDev
 }
 
+// scanOwner holds the token of the shared adapter's scan. Only the goroutine
+// which holds the token may run a scan.
+var scanOwner = make(chan struct{}, 1)
+
 // Scan starts scanning for Bluetooth devices.
+//
+// tinygo.org/x/bluetooth supports StopScan() only from inside the scan
+// callback: it reads the channel which Scan() writes without synchronizing
+// them, so calling it from another goroutine is a data race, and it fails
+// outright when it runs before Scan() has started. The context therefore
+// requests the stop, and the callback performs it when the next advertisement
+// arrives. Scan() itself returns as soon as the context is done, so a caller is
+// not held past its deadline, and the scan keeps the adapter until it really
+// stops, so that the next scan waits for it instead of failing.
 func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 	if _, ok := ctx.Deadline(); !ok {
 		var cancel context.CancelFunc
@@ -109,44 +122,46 @@ func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 		return err
 	}
 
-	// The scan is stopped from a separate goroutine, because the adapter
-	// calls the scan callback only when an advertisement arrives. Stopping
-	// the scan from the callback left the scan running until the next
-	// advertisement, which never comes on a quiet link.
-	scanDone := make(chan struct{})
-	defer close(scanDone)
-
-	go func() {
-		select {
-		case <-ctx.Done():
-			adapter.StopScan()
-		case <-scanDone:
-		}
-	}()
-
-	err = adapter.Scan(func(adapter *bluetooth.Adapter, scanRes bluetooth.ScanResult) {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-
-		// The filters are checked before the device is stored, so that
-		// Devices() returns only the devices which the scan asked for.
-		scanDev := newDeviceFromScanResult(scanRes)
-		if !scanOpts.Matches(scanDev) {
-			return
-		}
-
-		dev := s.updateDevice(scanDev)
-
-		for _, scanHandler := range scanOpts.handlers {
-			scanHandler(dev)
-		}
-	})
-	if err != nil {
-		return err
+	// The shared adapter runs one scan at a time.
+	select {
+	case scanOwner <- struct{}{}:
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 
-	return nil
+	scanDone := make(chan error, 1)
+
+	go func() {
+		defer func() { <-scanOwner }()
+
+		scanDone <- adapter.Scan(func(adapter *bluetooth.Adapter, scanRes bluetooth.ScanResult) {
+			select {
+			case <-ctx.Done():
+				adapter.StopScan()
+				return
+			default:
+			}
+
+			// The filters are checked before the device is stored, so
+			// that Devices() returns only the devices which the scan
+			// asked for.
+			scanDev := newDeviceFromScanResult(scanRes)
+			if !scanOpts.Matches(scanDev) {
+				return
+			}
+
+			dev := s.updateDevice(scanDev)
+
+			for _, scanHandler := range scanOpts.handlers {
+				scanHandler(dev)
+			}
+		})
+	}()
+
+	select {
+	case err := <-scanDone:
+		return err
+	case <-ctx.Done():
+		return nil
+	}
 }

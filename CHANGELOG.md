@@ -31,7 +31,8 @@ The first tagged release. The library is a central (client): the peripheral role
 
 - A UUID was built in two different word orders, so `NewUUIDFromUUID16(0xFFF6)` was not equal to `NewUUIDFromString("0000FFF6-0000-1000-8000-00805F9B34FB")` and printed as `5F9B34FB-8000-0080-0000-10000000FFF6`. A characteristic therefore never matched its entry in the assigned numbers database and its name was always empty.
 - The shared adapter was enabled on every scan, and the underlying stack rejects a second `Enable()`, so a program which ran more than one scan failed after the first one.
-- Cancelling the context did not stop a scan until the next advertisement arrived, so a scan on a quiet link ran until the process ended.
+- `Scan` did not return until an advertisement arrived, so cancelling its context did not release the caller on a quiet link. It now returns as soon as the context is done. The adapter itself still stops at the next advertisement, because tinygo.org/x/bluetooth supports `StopScan` only from inside the scan callback: calling it from another goroutine is a data race on the adapter's internal channel.
+- A second scan failed with "already calling Scan function" when the previous one had not stopped yet. A scan now waits for the adapter instead, until its own context is done.
 - The discovered devices were held in a map which the adapter callback goroutine wrote while the caller read it, and the manufacturer of a device was built on demand from those same goroutines. Both are data races which `go test -race` reports.
 - Only the last manufacturer specific data element of an advertisement was kept.
 - The base characteristic did not implement `WriteWithoutResponse`, so it did not satisfy the `Characteristic` interface on its own.
