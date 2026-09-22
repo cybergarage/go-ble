@@ -20,6 +20,8 @@ import (
 	ble "github.com/cybergarage/go-ble/ble/types"
 )
 
+// The Bluetooth Base UUID is 00000000-0000-1000-8000-00805F9B34FB, and a 16-bit
+// or a 32-bit UUID is the base UUID with its leading bytes replaced.
 func TestParseUUID(t *testing.T) {
 	t.Run("string", func(t *testing.T) {
 		tests := []struct {
@@ -28,10 +30,11 @@ func TestParseUUID(t *testing.T) {
 			Is32Bit  bool
 			Is128Bit bool
 		}{
-			{"5F9B34FB-8000-0080-0000-10000000FD3D", true, false, false}, // 16-bit UUID
-			{"5F9B34FB-8000-0080-0000-10000000FFF6", true, false, false}, // 16-bit UUID
-			{"5F9B34FB-8000-0080-0000-10000001ABCD", false, true, false}, // 32-bit UUID
-			{"00000000-8000-0080-0000-10000001ABCD", false, false, true}, // 128-bit UUID
+			{"0000FD3D-0000-1000-8000-00805F9B34FB", true, false, false}, // 16-bit UUID
+			{"0000FFF6-0000-1000-8000-00805F9B34FB", true, false, false}, // 16-bit UUID
+			{"0001ABCD-0000-1000-8000-00805F9B34FB", false, true, false}, // 32-bit UUID
+			{"0001ABCD-0000-1000-8000-000000000000", false, false, true}, // 128-bit UUID
+			{"18EE2EF5-263D-4559-959F-4F9C429F9D11", false, false, true}, // 128-bit UUID
 		}
 
 		for _, test := range tests {
@@ -49,30 +52,55 @@ func TestParseUUID(t *testing.T) {
 			if uuid.IsUUID128() != test.Is128Bit {
 				t.Errorf("Expected IsUUID128() to be %v for UUID %s, got %v", test.Is128Bit, test.input, uuid.IsUUID128())
 			}
+			// The string representation round trips.
+			if uuid.String() != test.input {
+				t.Errorf("Expected %s, got %s", test.input, uuid.String())
+			}
 		}
 	})
 }
 
 func TestGenerateUUID(t *testing.T) {
+	// 0000FFF6-0000-1000-8000-00805F9B34FB
+	uuidFFF6 := ble.UUID{0x0000FFF6, 0x00001000, 0x80000080, 0x5F9B34FB}
+	// 0000FD3D-0000-1000-8000-00805F9B34FB
+	uuidFD3D := ble.UUID{0x0000FD3D, 0x00001000, 0x80000080, 0x5F9B34FB}
+	// 000FFFF6-0000-1000-8000-00805F9B34FB
+	uuidFFFF6 := ble.UUID{0x000FFFF6, 0x00001000, 0x80000080, 0x5F9B34FB}
+
 	tests := []struct {
 		uuid     ble.UUID
 		expected ble.UUID
 	}{
-		{ble.NewUUIDFromUUID16(0xFFF6), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FFF6}},
-		{ble.MustUUIDFrom(uint16(0xFFF6)), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FFF6}},
-		{ble.MustUUIDFrom(uint32(0xFFF6)), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FFF6}},
-		{ble.MustUUIDFrom(int(0xFFF6)), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FFF6}},
-		{ble.NewUUIDFromUUID32(0xFFFF6), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x000FFFF6}},
-		{ble.MustUUIDFrom(int(0xFFFF6)), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x000FFFF6}},
-		{ble.MustUUIDFrom("5F9B34FB-8000-0080-0000-10000000FFF6"), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FFF6}},
-		{ble.MustUUIDFrom([]byte{0x5F, 0x9B, 0x34, 0xFB, 0x80, 0x00, 0x00, 0x80, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0xFD, 0x3D}), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FD3D}},
-		{ble.MustUUIDFrom(ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FD3D}), ble.UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x0000FD3D}},
+		{ble.NewUUIDFromUUID16(0xFFF6), uuidFFF6},
+		{ble.MustUUIDFrom(uint16(0xFFF6)), uuidFFF6},
+		{ble.MustUUIDFrom(uint32(0xFFF6)), uuidFFF6},
+		{ble.MustUUIDFrom(int(0xFFF6)), uuidFFF6},
+		{ble.NewUUIDFromUUID32(0xFFFF6), uuidFFFF6},
+		{ble.MustUUIDFrom(int(0xFFFF6)), uuidFFFF6},
+		// A 16-bit UUID and its expanded string are the same UUID.
+		{ble.MustUUIDFrom("0000FFF6-0000-1000-8000-00805F9B34FB"), uuidFFF6},
+		{ble.MustUUIDFrom([]byte{0x00, 0x00, 0xFD, 0x3D, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB}), uuidFD3D},
+		{ble.MustUUIDFrom(uuidFD3D), uuidFD3D},
 	}
 
 	for _, test := range tests {
 		result := test.uuid
 		if result != test.expected {
-			t.Errorf("Expected UUID %v, got %v", test.expected, result)
+			t.Errorf("Expected UUID %s, got %s", test.expected.String(), result.String())
 		}
+	}
+}
+
+// The database is keyed by the assigned 16-bit UUIDs, so a UUID which a device
+// advertises must look up its name.
+func TestUUIDDatabaseLookup(t *testing.T) {
+	uuid16 := ble.NewUUIDFromUUID16(0xFFF6)
+	uuidStr, err := ble.NewUUIDFromString("0000FFF6-0000-1000-8000-00805F9B34FB")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !uuid16.Equal(uuidStr) {
+		t.Errorf("%s != %s", uuid16.String(), uuidStr.String())
 	}
 }

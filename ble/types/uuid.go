@@ -16,6 +16,7 @@ package types
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cybergarage/go-safecast/safecast"
@@ -26,8 +27,11 @@ import (
 type UUID [4]uint32
 
 var (
-	nilUUID  = UUID{0x00000000, 0x00000000, 0x00000000, 0x00000000}
-	baseUUID = UUID{0x5F9B34FB, 0x80000080, 0x00001000, 0x00000000}
+	nilUUID = UUID{0x00000000, 0x00000000, 0x00000000, 0x00000000}
+	// baseUUID is the Bluetooth Base UUID, 00000000-0000-1000-8000-00805F9B34FB.
+	// The words are held in the big-endian order, so the first word holds
+	// the leading bytes of the UUID, as Bytes() and String() write them.
+	baseUUID = UUID{0x00000000, 0x00001000, 0x80000080, 0x5F9B34FB}
 )
 
 // NewUUIDFromUUID creates a UUID from a uuid.UUID.
@@ -42,11 +46,33 @@ func NewUUIDFromUUID(uuid uuid.UUID) UUID {
 }
 
 // NewUUIDFromString creates a UUID from a string.
+//
+// A full UUID is accepted, such as 0000FFF6-0000-1000-8000-00805F9B34FB, and so
+// is the short form of an assigned 16-bit or 32-bit UUID, with or without the
+// "0x" prefix, such as FFF6 or 0xFFF6. The short forms are expanded with the
+// Bluetooth Base UUID.
 func NewUUIDFromString(s string) (UUID, error) {
+	shortStr := strings.TrimSpace(s)
+	shortStr = strings.TrimPrefix(strings.TrimPrefix(shortStr, "0x"), "0X")
+
+	switch len(shortStr) {
+	case 4:
+		u16, err := strconv.ParseUint(shortStr, 16, 16)
+		if err == nil {
+			return NewUUIDFromUUID16(uint16(u16)), nil
+		}
+	case 8:
+		u32, err := strconv.ParseUint(shortStr, 16, 32)
+		if err == nil {
+			return NewUUIDFromUUID32(uint32(u32)), nil
+		}
+	}
+
 	u, err := uuid.Parse(s)
 	if err != nil {
 		return nilUUID, err
 	}
+
 	return NewUUIDFromUUID(u), nil
 }
 
@@ -72,20 +98,20 @@ func NewUUIDFromBytes(b []byte) (UUID, error) {
 // NewUUIDFromUUID16 creates a UUID from a 16-bit UUID.
 func NewUUIDFromUUID16(u16 uint16) UUID {
 	return UUID{
-		baseUUID[0],
+		uint32(u16),
 		baseUUID[1],
 		baseUUID[2],
-		uint32(u16),
+		baseUUID[3],
 	}
 }
 
 // NewUUIDFromUUID32 creates a UUID from a 32-bit UUID.
 func NewUUIDFromUUID32(u32 uint32) UUID {
 	return UUID{
-		baseUUID[0],
+		u32,
 		baseUUID[1],
 		baseUUID[2],
-		u32,
+		baseUUID[3],
 	}
 }
 
@@ -144,12 +170,12 @@ func (u UUID) IsNil() bool {
 
 // IsUUID16 checks if the UUID is a 16-bit UUID.
 func (u UUID) IsUUID16() bool {
-	return u[0] == baseUUID[0] && u[1] == baseUUID[1] && u[2] == baseUUID[2] && (u[3] == uint32(u[3]&0xFFFF))
+	return u[1] == baseUUID[1] && u[2] == baseUUID[2] && u[3] == baseUUID[3] && (u[0] == uint32(u[0]&0xFFFF))
 }
 
 // IsUUID32 checks if the UUID is a 32-bit UUID.
 func (u UUID) IsUUID32() bool {
-	return u[0] == baseUUID[0] && u[1] == baseUUID[1] && u[2] == baseUUID[2] && (u[3] != uint32(u[3]&0xFFFF))
+	return u[1] == baseUUID[1] && u[2] == baseUUID[2] && u[3] == baseUUID[3] && (u[0] != uint32(u[0]&0xFFFF))
 }
 
 // IsUUID128 checks if the UUID is a 128-bit UUID.
@@ -162,7 +188,7 @@ func (u UUID) UUID16() (uint16, bool) {
 	if !u.IsUUID16() {
 		return 0, false
 	}
-	return uint16(u[3]), true
+	return uint16(u[0]), true
 }
 
 // UUID32 returns the 32-bit representation of the UUID if it is a 32-bit UUID.
@@ -170,7 +196,7 @@ func (u UUID) UUID32() (uint32, bool) {
 	if !u.IsUUID32() {
 		return 0, false
 	}
-	return u[3], true
+	return u[0], true
 }
 
 // Bytes returns the byte representation of the UUID in big-endian format.

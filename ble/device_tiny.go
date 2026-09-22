@@ -24,31 +24,26 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-// tinygo.org/x/bluetooth's UUID stores its four 32-bit words in the reverse
-// order of this package's own UUID (id[0] holds the *last* 4 bytes of the
-// standard big-endian UUID, not the first). Before tinygo-bluetooth v0.15,
-// both types were plain [4]uint32 arrays with this same reversed layout, so a
-// direct array conversion transparently preserved it. v0.15 wrapped tinygo's
-// array in an opaque struct, so that conversion no longer compiles; these
-// helpers reconstruct the same word-for-word (not byte-standard) mapping via
-// the BytesBigEndian/NewUUID accessors, so UUID equality against constants
-// such as MatterServiceUUID keeps working exactly as before.
+// This package holds the words of a UUID in the big-endian order, so the first
+// word holds the leading bytes of the UUID, as UUID.Bytes() and UUID.String()
+// write them. The helpers convert between that layout and the big-endian bytes
+// of tinygo.org/x/bluetooth.
 func uuidFromTinygo(u bluetooth.UUID) UUID {
 	b := u.BytesBigEndian()
 	return UUID{
-		binary.BigEndian.Uint32(b[12:16]),
-		binary.BigEndian.Uint32(b[8:12]),
-		binary.BigEndian.Uint32(b[4:8]),
 		binary.BigEndian.Uint32(b[0:4]),
+		binary.BigEndian.Uint32(b[4:8]),
+		binary.BigEndian.Uint32(b[8:12]),
+		binary.BigEndian.Uint32(b[12:16]),
 	}
 }
 
 func uuidToTinygo(u UUID) bluetooth.UUID {
 	var b [16]byte
-	binary.BigEndian.PutUint32(b[0:4], u[3])
-	binary.BigEndian.PutUint32(b[4:8], u[2])
-	binary.BigEndian.PutUint32(b[8:12], u[1])
-	binary.BigEndian.PutUint32(b[12:16], u[0])
+	binary.BigEndian.PutUint32(b[0:4], u[0])
+	binary.BigEndian.PutUint32(b[4:8], u[1])
+	binary.BigEndian.PutUint32(b[8:12], u[2])
+	binary.BigEndian.PutUint32(b[12:16], u[3])
 	return bluetooth.NewUUID(b)
 }
 
