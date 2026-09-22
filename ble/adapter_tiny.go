@@ -15,11 +15,33 @@
 package ble
 
 import (
+	"sync"
+
 	"tinygo.org/x/bluetooth"
 )
 
-var sharedAdapter = bluetooth.DefaultAdapter
+var (
+	sharedAdapter     = bluetooth.DefaultAdapter
+	sharedAdapterOnce sync.Once
+	errSharedAdapter  error
+)
 
 func defaultAdapter() *bluetooth.Adapter {
 	return sharedAdapter
+}
+
+// enableDefaultAdapter enables the shared adapter once, and returns it.
+//
+// The adapter is shared by every scanner and device in the process, and the
+// underlying implementation rejects a second Enable() with an "already calling
+// Enable function" error. Enabling it once keeps a program which runs more than
+// one scan, or more than one scanner, working.
+func enableDefaultAdapter() (*bluetooth.Adapter, error) {
+	sharedAdapterOnce.Do(func() {
+		errSharedAdapter = sharedAdapter.Enable()
+	})
+	if errSharedAdapter != nil {
+		return nil, errSharedAdapter
+	}
+	return sharedAdapter, nil
 }

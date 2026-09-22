@@ -31,7 +31,7 @@ const (
 	DebugParamStr   = "debug"
 )
 
-var rootCmd = &cobra.Command{ // nolint:exhaustruct
+var rootCmd = &cobra.Command{ // nolint:exhaustruct,exhaustruct_v5
 	Use:               ProgramName,
 	Version:           ble.Version,
 	Short:             "",

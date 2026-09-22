@@ -27,7 +27,7 @@ func init() {
 	rootCmd.AddCommand(scanCmd)
 }
 
-var scanCmd = &cobra.Command{ // nolint:exhaustruct
+var scanCmd = &cobra.Command{ // nolint:exhaustruct,exhaustruct_v5
 	Use:   "scan",
 	Short: "Scan for BLE devices.",
 	Long:  "Scan for BLE (Bluetooth Low Energy) devices.",

@@ -54,21 +54,30 @@ func uuidToTinygo(u UUID) bluetooth.UUID {
 
 type tinyDevice struct {
 	*baseDevice
-	scanResult   bluetooth.ScanResult
-	manufacturer Manufacturer
-	rssi         int
-	adServiceMap sync.Map
-	tinyDev      *bluetooth.Device
+	scanResult    bluetooth.ScanResult
+	manufacturers []Manufacturer
+	rssi          int
+	adServiceMap  sync.Map
+	tinyDev       *bluetooth.Device
 }
 
 func newDeviceFromScanResult(scanResult bluetooth.ScanResult) *tinyDevice {
+	// The manufacturers are built here, not on demand, because a scanned
+	// device is read from the caller goroutine while the adapter callback
+	// goroutine is updating it.
+	manufacturerData := scanResult.ManufacturerData()
+	manufacturers := make([]Manufacturer, 0, len(manufacturerData))
+	for _, md := range manufacturerData {
+		manufacturers = append(manufacturers, newManufacturer(int(md.CompanyID), md.Data))
+	}
+
 	dev := &tinyDevice{
-		baseDevice:   newBaseDevice(),
-		manufacturer: nil,
-		scanResult:   scanResult,
-		rssi:         int(scanResult.RSSI),
-		adServiceMap: sync.Map{},
-		tinyDev:      nil,
+		baseDevice:    newBaseDevice(),
+		manufacturers: manufacturers,
+		scanResult:    scanResult,
+		rssi:          int(scanResult.RSSI),
+		adServiceMap:  sync.Map{},
+		tinyDev:       nil,
 	}
 	for _, sd := range scanResult.ServiceData() {
 		dev.addServiceDataElement(sd)
@@ -76,23 +85,20 @@ func newDeviceFromScanResult(scanResult bluetooth.ScanResult) *tinyDevice {
 	return dev
 }
 
-// Manufacturer returns the Bluetooth manufacturer of the device.
+// Manufacturer returns the first Bluetooth manufacturer of the device.
+//
+// An advertisement may hold more than one manufacturer specific data element,
+// and only the last one was kept before. Use Manufacturers() to read them all.
 func (dev *tinyDevice) Manufacturer() Manufacturer {
-	if dev.manufacturer == nil {
-		manufacturers := dev.scanResult.ManufacturerData()
-		switch len(manufacturers) {
-		case 0:
-			dev.manufacturer = newNilManufacturer()
-		case 1:
-			manufacturer := manufacturers[0]
-			dev.manufacturer = newManufacturer(int(manufacturer.CompanyID), manufacturer.Data)
-		default:
-			for _, v := range manufacturers {
-				dev.manufacturer = newManufacturer(int(v.CompanyID), v.Data)
-			}
-		}
+	if len(dev.manufacturers) == 0 {
+		return newNilManufacturer()
 	}
-	return dev.manufacturer
+	return dev.manufacturers[0]
+}
+
+// Manufacturers returns all the Bluetooth manufacturers of the device.
+func (dev *tinyDevice) Manufacturers() []Manufacturer {
+	return dev.manufacturers
 }
 
 // LocalName returns the local name of the device.
@@ -203,12 +209,18 @@ func (dev *tinyDevice) Services() []Service {
 
 // Connect connects to the device.
 func (dev *tinyDevice) Connect(ctx context.Context) error {
-	adapter := defaultAdapter()
+	// The adapter is enabled here as well, because a device may be built
+	// from an address instead of a scan result, and connecting is then the
+	// first operation of the process.
+	adapter, err := enableDefaultAdapter()
+	if err != nil {
+		return err
+	}
 	tinyAddr, err := addressToTiny(dev.Address())
 	if err != nil {
 		return err
 	}
-	connParams := bluetooth.ConnectionParams{} // nolint: exhaustruct
+	connParams := bluetooth.ConnectionParams{} // nolint: exhaustruct,exhaustruct_v5
 	tinyDev, err := adapter.Connect(tinyAddr, connParams)
 	if err != nil {
 		return err

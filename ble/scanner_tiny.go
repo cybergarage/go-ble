@@ -16,29 +16,82 @@ package ble
 
 import (
 	"context"
+	"strings"
+	"sync"
 	"time"
 
 	"tinygo.org/x/bluetooth"
 )
 
+// tinyScanner scans for the Bluetooth devices with the shared adapter.
+//
+// The discovered devices are updated from the adapter callback goroutine and
+// they are read by the caller, so the device map is guarded by the mutex.
 type tinyScanner struct {
+	mutex   sync.RWMutex
 	devices map[string]*tinyDevice
 }
 
 // NewScanner creates a new Bluetooth scanner.
 func NewScanner() Scanner {
 	return &tinyScanner{
+		mutex:   sync.RWMutex{},
 		devices: map[string]*tinyDevice{},
 	}
 }
 
 // Devices returns the list of discovered devices.
 func (s *tinyScanner) Devices() []Device {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
 	devs := make([]Device, 0, len(s.devices))
 	for _, dev := range s.devices {
 		devs = append(devs, dev)
 	}
+
 	return devs
+}
+
+// LookupDevice looks up a discovered device by its address.
+func (s *tinyScanner) LookupDevice(addr string) (Device, bool) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	dev, ok := s.devices[strings.ToUpper(addr)]
+	if !ok {
+		return nil, false
+	}
+
+	return dev, true
+}
+
+// updateDevice adds or updates the device of the specified scan result, and
+// returns the device which the scanner holds.
+func (s *tinyScanner) updateDevice(scanDev *tinyDevice) *tinyDevice {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	now := time.Now()
+	addrKey := strings.ToUpper(scanDev.Address().String())
+
+	discoveredDev, ok := s.devices[addrKey]
+	if !ok {
+		s.devices[addrKey] = scanDev
+		return scanDev
+	}
+
+	discoveredDev.lastSeenAt = now
+	discoveredDev.rssi = scanDev.RSSI()
+	for _, scanService := range scanDev.Services() {
+		if _, ok := discoveredDev.LookupService(scanService.UUID()); ok {
+			continue
+		}
+		discoveredDev.addService(scanService)
+		discoveredDev.modifiedAt = now
+	}
+
+	return discoveredDev
 }
 
 // Scan starts scanning for Bluetooth devices.
@@ -49,45 +102,51 @@ func (s *tinyScanner) Scan(ctx context.Context, opts ...ScannerOption) error {
 		defer cancel()
 	}
 
-	scanHandlers := []ScanHandler{}
-	for _, opt := range opts {
-		switch v := opt.(type) {
-		case ScanHandler:
-			scanHandlers = append(scanHandlers, v)
-		}
-	}
-	err := defaultAdapter().Enable()
+	scanOpts := newScanOptions(opts...)
+
+	adapter, err := enableDefaultAdapter()
 	if err != nil {
 		return err
 	}
-	err = defaultAdapter().Scan(func(adapter *bluetooth.Adapter, scanRes bluetooth.ScanResult) {
+
+	// The scan is stopped from a separate goroutine, because the adapter
+	// calls the scan callback only when an advertisement arrives. Stopping
+	// the scan from the callback left the scan running until the next
+	// advertisement, which never comes on a quiet link.
+	scanDone := make(chan struct{})
+	defer close(scanDone)
+
+	go func() {
 		select {
 		case <-ctx.Done():
 			adapter.StopScan()
+		case <-scanDone:
+		}
+	}()
+
+	err = adapter.Scan(func(adapter *bluetooth.Adapter, scanRes bluetooth.ScanResult) {
+		select {
+		case <-ctx.Done():
 			return
 		default:
-			now := time.Now()
-			addrKey := scanRes.Address.String()
-			scanDev := newDeviceFromScanResult(scanRes)
-			discoveredDev, ok := s.devices[addrKey]
-			if ok {
-				discoveredDev.lastSeenAt = now
-				discoveredDev.rssi = scanDev.RSSI()
-				for _, scanService := range scanDev.Services() {
-					if _, ok := discoveredDev.LookupService(scanService.UUID()); !ok {
-						discoveredDev.addService(scanService)
-						discoveredDev.modifiedAt = now
-					}
-				}
-			} else {
-				s.devices[addrKey] = scanDev
-				discoveredDev = scanDev
-			}
+		}
 
-			for _, scanHandler := range scanHandlers {
-				scanHandler(discoveredDev)
-			}
+		// The filters are checked before the device is stored, so that
+		// Devices() returns only the devices which the scan asked for.
+		scanDev := newDeviceFromScanResult(scanRes)
+		if !scanOpts.Matches(scanDev) {
+			return
+		}
+
+		dev := s.updateDevice(scanDev)
+
+		for _, scanHandler := range scanOpts.handlers {
+			scanHandler(dev)
 		}
 	})
-	return err
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

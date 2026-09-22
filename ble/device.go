@@ -31,8 +31,14 @@ type Device interface {
 
 // DeviceDescriptor represents a read-only Bluetooth device descriptor.
 type DeviceDescriptor interface {
-	// Manufacturer returns the Bluetooth manufacturer of the device.
+	// Manufacturer returns the first Bluetooth manufacturer of the device.
+	// A nil manufacturer is returned when the device advertises no
+	// manufacturer specific data.
 	Manufacturer() Manufacturer
+	// Manufacturers returns all the Bluetooth manufacturers of the device.
+	// An advertisement may hold more than one manufacturer specific data
+	// element.
+	Manufacturers() []Manufacturer
 	// LocalName returns the local name of the device.
 	LocalName() string
 	// Address returns the Bluetooth address of the device.
