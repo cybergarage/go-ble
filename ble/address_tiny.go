@@ -27,7 +27,7 @@ func newAddressFromTiny(tinyAddr bluetooth.Address) (Address, error) {
 }
 
 func addressToTiny(addr Address) (bluetooth.Address, error) {
-	tinyAddr := bluetooth.Address{} // nolint: exhaustruct
+	tinyAddr := bluetooth.Address{} // nolint: exhaustruct,exhaustruct_v5
 	err := tinyAddr.UnmarshalBinary(addr)
 	if err != nil {
 		return bluetooth.Address{}, err

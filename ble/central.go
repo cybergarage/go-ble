@@ -18,9 +18,21 @@ import (
 	"context"
 )
 
+// ConnectionHandler is a handler function which is called when a device is
+// connected or disconnected.
+type ConnectionHandler func(addr Address, connected bool)
+
 // Central represents a Bluetooth central device.
 type Central interface {
 	Scanner
 	// Connect connects to the specified device.
 	Connect(ctx context.Context, dev Device) error
+	// SetConnectionHandler sets a handler which is called when a device is
+	// connected or disconnected.
+	//
+	// A peripheral can drop a connection at any time, and a central which
+	// does not notice it keeps writing to a connection which is gone. The
+	// handler is set on the shared adapter, so it reports every device of
+	// the process.
+	SetConnectionHandler(handler ConnectionHandler)
 }

@@ -16,6 +16,8 @@ package ble
 
 import (
 	"context"
+
+	"tinygo.org/x/bluetooth"
 )
 
 type tinyCentral struct {
@@ -32,4 +34,24 @@ func NewCentral() Central {
 // Connect connects to the specified device.
 func (c *tinyCentral) Connect(ctx context.Context, dev Device) error {
 	return dev.Connect(ctx)
+}
+
+// SetConnectionHandler sets a handler which is called when a device is
+// connected or disconnected.
+func (c *tinyCentral) SetConnectionHandler(handler ConnectionHandler) {
+	if handler == nil {
+		defaultAdapter().SetConnectHandler(nil)
+		return
+	}
+
+	// The handler is set on the adapter itself, so it does not require the
+	// adapter to be enabled, and a machine without Bluetooth hardware does
+	// not fail here.
+	defaultAdapter().SetConnectHandler(func(tinyDev bluetooth.Device, connected bool) {
+		addr, err := newAddressFromTiny(tinyDev.Address)
+		if err != nil {
+			return
+		}
+		handler(addr, connected)
+	})
 }
