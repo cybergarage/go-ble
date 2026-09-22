@@ -15,7 +15,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/cybergarage/go-ble/ble"
@@ -23,8 +22,8 @@ import (
 )
 
 func main() {
+	// The error is printed by the command itself.
 	if err := cmd.Execute(ble.NewCentral()); err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }

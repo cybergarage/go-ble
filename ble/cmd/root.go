@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cybergarage/go-ble/ble"
 	"github.com/cybergarage/go-logger/log"
@@ -25,18 +26,32 @@ import (
 )
 
 const (
-	ProgramName     = "blelookup"
+	ProgramName = "blelookup"
+
 	FormatParamStr  = "format"
 	VerboseParamStr = "verbose"
 	DebugParamStr   = "debug"
+	TimeoutParamStr = "timeout"
 )
 
 var rootCmd = &cobra.Command{ // nolint:exhaustruct,exhaustruct_v5
-	Use:               ProgramName,
+	Use:   ProgramName,
+	Short: "Scan and inspect the Bluetooth Low Energy devices nearby",
+	Long: `blelookup scans for the Bluetooth Low Energy devices which are advertising
+nearby, connects to one of them, and looks up the Bluetooth SIG assigned
+numbers.
+
+  blelookup scan                             list the advertising devices
+  blelookup scan --service 0xFFF6            list only the devices of a service
+  blelookup connect <address> <service>      list the characteristics of a service
+  blelookup lookup <uuid|company id>         look up an assigned number
+
+This tool is a central. Advertising as a peripheral is not supported yet.`,
 	Version:           ble.Version,
-	Short:             "",
-	Long:              "",
 	DisableAutoGenTag: true,
+	// The usage is not printed for a runtime error, such as a device which
+	// is not found, because the command line itself is valid.
+	SilenceUsage: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		log.SetDefault(nil)
 		verbose := viper.GetBool(VerboseParamStr)
@@ -62,16 +77,17 @@ func RootCommand() *cobra.Command {
 	return rootCmd
 }
 
-var sharedCommissioner ble.Central
+var sharedCentral ble.Central
 
+// SharedCentral returns the central which the commands run on.
 func SharedCentral() ble.Central {
-	return sharedCommissioner
+	return sharedCentral
 }
 
-func Execute(commissioner ble.Central) error {
-	sharedCommissioner = commissioner
-	err := rootCmd.Execute()
-	return err
+// Execute runs the command with the specified central.
+func Execute(central ble.Central) error {
+	sharedCentral = central
+	return rootCmd.Execute()
 }
 
 func init() {
@@ -82,13 +98,27 @@ func init() {
 	viper.BindPFlag(FormatParamStr, rootCmd.PersistentFlags().Lookup(FormatParamStr))
 	viper.BindEnv(FormatParamStr) // BLE_LOOKUP_FORMAT
 
+	viper.SetDefault(TimeoutParamStr, ble.DefaultScanTimeout)
+	rootCmd.PersistentFlags().DurationP(TimeoutParamStr, "t", ble.DefaultScanTimeout, "operation timeout")
+	viper.BindPFlag(TimeoutParamStr, rootCmd.PersistentFlags().Lookup(TimeoutParamStr))
+	viper.BindEnv(TimeoutParamStr) // BLE_LOOKUP_TIMEOUT
+
 	viper.SetDefault(VerboseParamStr, false)
-	rootCmd.PersistentFlags().Bool((VerboseParamStr), false, "enable verbose output")
+	rootCmd.PersistentFlags().Bool(VerboseParamStr, false, "enable verbose output")
 	viper.BindPFlag(VerboseParamStr, rootCmd.PersistentFlags().Lookup(VerboseParamStr))
 	viper.BindEnv(VerboseParamStr) // BLE_LOOKUP_VERBOSE
 
 	viper.SetDefault(DebugParamStr, false)
-	rootCmd.PersistentFlags().Bool((DebugParamStr), false, "enable debug output")
+	rootCmd.PersistentFlags().Bool(DebugParamStr, false, "enable debug output")
 	viper.BindPFlag(DebugParamStr, rootCmd.PersistentFlags().Lookup(DebugParamStr))
 	viper.BindEnv(DebugParamStr) // BLE_LOOKUP_DEBUG
+}
+
+// operationTimeout returns the configured timeout.
+func operationTimeout() time.Duration {
+	timeout := viper.GetDuration(TimeoutParamStr)
+	if timeout <= 0 {
+		return ble.DefaultScanTimeout
+	}
+	return timeout
 }

@@ -16,43 +16,92 @@ package cmd
 
 import (
 	"context"
-	"time"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/cybergarage/go-ble/ble"
-	"github.com/cybergarage/go-logger/log"
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(scanCmd)
-}
+const (
+	serviceParamStr = "service"
+	addressParamStr = "address"
+	nameParamStr    = "name"
+	rssiParamStr    = "rssi"
+)
 
 var scanCmd = &cobra.Command{ // nolint:exhaustruct,exhaustruct_v5
 	Use:   "scan",
-	Short: "Scan for BLE devices.",
-	Long:  "Scan for BLE (Bluetooth Low Energy) devices.",
+	Short: "Scan for the advertising BLE devices",
+	Long: `Scan for the Bluetooth Low Energy devices which are advertising nearby, and
+print them as they are discovered.
+
+The scan stops after the timeout, or when it is interrupted.`,
+	Example: `  blelookup scan
+  blelookup scan --service 0xFFF6 --timeout 30s
+  blelookup scan --rssi -70 --format json`,
+	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logger := log.Default()
-		if logger == nil {
-			log.SetDefault(log.NewStdoutLogger(log.LevelInfo))
-		}
-
-		// format, err := NewFormatFromString(viper.GetString(FormatParamStr))
-		// if err != nil {
-		// 	return err
-		// }
-
-		central := SharedCentral()
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		err := central.Scan(ctx, ble.ScanHandler(func(dev ble.Device) {
-			log.Infof("Device responded: %s", dev.String())
-		}))
+		services, err := cmd.Flags().GetStringSlice(serviceParamStr)
 		if err != nil {
-			log.Fatalf("Failed to scan: %v", err)
+			return err
+		}
+		addrs, err := cmd.Flags().GetStringSlice(addressParamStr)
+		if err != nil {
+			return err
+		}
+		names, err := cmd.Flags().GetStringSlice(nameParamStr)
+		if err != nil {
+			return err
+		}
+		rssi, err := cmd.Flags().GetInt(rssiParamStr)
+		if err != nil {
+			return err
 		}
 
-		return nil
+		writer, err := newDeviceWriter()
+		if err != nil {
+			return err
+		}
+		defer writer.Flush()
+
+		opts := []ble.ScannerOption{
+			ble.WithScanHandler(func(dev ble.Device) {
+				writer.Write(dev)
+			}),
+		}
+		if 0 < len(services) {
+			serviceUUIDs := make([]any, 0, len(services))
+			for _, service := range services {
+				serviceUUIDs = append(serviceUUIDs, service)
+			}
+			opts = append(opts, ble.WithScanServiceUUIDs(serviceUUIDs...))
+		}
+		if 0 < len(addrs) {
+			opts = append(opts, ble.WithScanAddresses(addrs...))
+		}
+		if 0 < len(names) {
+			opts = append(opts, ble.WithScanLocalNames(names...))
+		}
+		if cmd.Flags().Changed(rssiParamStr) {
+			opts = append(opts, ble.WithScanRSSIThreshold(rssi))
+		}
+
+		ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+
+		ctx, cancel := context.WithTimeout(ctx, operationTimeout())
+		defer cancel()
+
+		return SharedCentral().Scan(ctx, opts...)
 	},
+}
+
+func init() {
+	scanCmd.Flags().StringSliceP(serviceParamStr, "s", []string{}, "scan only the devices which advertise the service UUID")
+	scanCmd.Flags().StringSlice(addressParamStr, []string{}, "scan only the devices of the address")
+	scanCmd.Flags().StringSlice(nameParamStr, []string{}, "scan only the devices of the local name")
+	scanCmd.Flags().Int(rssiParamStr, 0, "scan only the devices whose RSSI is equal to or greater than this value")
+	rootCmd.AddCommand(scanCmd)
 }
