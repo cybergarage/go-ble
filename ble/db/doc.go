@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ble
+/*
+Package db holds the Bluetooth SIG assigned numbers, so that a company
+identifier, a service UUID or a characteristic UUID can be named.
 
-const (
-	Version = "v0.9.0"
-)
+The tables are the YAML documents which the Bluetooth SIG publishes, and they
+are embedded in the package, so a lookup needs no network and no data file.
+
+The API of this package is not stable until v1.0.0.
+*/
+package db

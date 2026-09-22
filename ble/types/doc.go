@@ -12,8 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ble
+/*
+Package types holds the Bluetooth UUID type, which the rest of go-ble is built
+on.
 
-const (
-	Version = "v0.9.0"
-)
+A UUID holds its four 32-bit words in the big-endian order, so the first word
+holds the leading bytes of the UUID, as UUID.Bytes() and UUID.String() write
+them. An assigned 16-bit or 32-bit UUID is expanded with the Bluetooth Base
+UUID, so it compares equal to its full form.
+
+The API of this package is not stable until v1.0.0.
+*/
+package types
