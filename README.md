@@ -9,6 +9,8 @@
 
 go-ble is a Go library for Bluetooth Low Energy (BLE). It is built on [tinygo.org/x/bluetooth](https://tinygo.org/x/bluetooth), and it adds a simpler interface and the Bluetooth SIG assigned numbers, so that scanning for a device and talking to its characteristics does not require knowing the underlying stack.
 
+**Note:** 🌱 This is a spare-time hobby project, so progress may be slow and changes may appear irregular. Thank you for your patience 🙂
+
 ## Status
 
 go-ble is a **central (client)** library. It scans for the devices which are advertising nearby, connects to one of them, and reads, writes and subscribes to its characteristics.
