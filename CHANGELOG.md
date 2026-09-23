@@ -4,8 +4,6 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
 ## [0.9.0] - 2026-09-22
 
 The first tagged release. The library is a central (client): the peripheral role is not implemented, and it is planned for v1.0.0.
