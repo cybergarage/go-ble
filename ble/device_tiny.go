@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -202,8 +203,14 @@ func (dev *tinyDevice) Services() []Service {
 	return services
 }
 
-// Connect connects to the device.
+// Connect connects to the device. It returns when the context is done,
+// even while the adapter is still connecting: the pending connection is then
+// cancelled where the platform allows, and a connection which completes
+// afterwards is closed.
 func (dev *tinyDevice) Connect(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	// The adapter is enabled here as well, because a device may be built
 	// from an address instead of a scan result, and connecting is then the
 	// first operation of the process.
@@ -216,12 +223,56 @@ func (dev *tinyDevice) Connect(ctx context.Context) error {
 		return err
 	}
 	connParams := bluetooth.ConnectionParams{} // nolint: exhaustruct,exhaustruct_v5
-	tinyDev, err := adapter.Connect(tinyAddr, connParams)
+	// The timeout of the parameters is honoured on macOS and Windows; the
+	// Linux implementation ignores it and waits for BlueZ, which
+	// cancelPendingConnection interrupts.
+	if deadline, ok := ctx.Deadline(); ok {
+		connParams.ConnectionTimeout = bluetooth.NewDuration(time.Until(deadline))
+	}
+	tinyDev, err := connectWithContext(ctx,
+		func() (bluetooth.Device, error) { return adapter.Connect(tinyAddr, connParams) },
+		func() { cancelPendingConnection(tinyAddr) },
+		func(late bluetooth.Device) { _ = late.Disconnect() },
+	)
 	if err != nil {
 		return err
 	}
 	dev.tinyDev = &tinyDev
 	return nil
+}
+
+// connectWithContext runs connect, and returns when it returns or when the
+// context is done, whichever comes first. When the context ends first,
+// cancel asks the platform to drop the pending connection, and a connection
+// which connect still makes is handed to closeLate, so that no connection
+// outlives the caller which gave up on it.
+func connectWithContext(
+	ctx context.Context,
+	connect func() (bluetooth.Device, error),
+	cancel func(),
+	closeLate func(bluetooth.Device),
+) (bluetooth.Device, error) {
+	type result struct {
+		dev bluetooth.Device
+		err error
+	}
+	done := make(chan result, 1)
+	go func() {
+		dev, err := connect()
+		done <- result{dev: dev, err: err}
+	}()
+	select {
+	case r := <-done:
+		return r.dev, r.err
+	case <-ctx.Done():
+	}
+	cancel()
+	go func() {
+		if r := <-done; r.err == nil {
+			closeLate(r.dev)
+		}
+	}()
+	return bluetooth.Device{}, fmt.Errorf("%w: %w", ErrConnectionCanceled, ctx.Err())
 }
 
 // Disconnect disconnects from the device.
