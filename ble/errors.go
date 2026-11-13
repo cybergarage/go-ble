@@ -27,4 +27,7 @@ var (
 	ErrInvalid = errors.New("invalid")
 	// ErrNotFound indicates that the value was not found.
 	ErrNotFound = errors.New("not found")
+	// ErrConnectionCanceled indicates that a connection attempt was given up
+	// because its context ended before the device connected.
+	ErrConnectionCanceled = errors.New("connection canceled")
 )
