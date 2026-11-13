@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-14
+
+A connection now honors its context, so a caller such as go-matter can bound each connection attempt.
+
 ### Fixed
 
 - `Device.Connect()` returns when its context is done, with an error which wraps `ErrConnectionCanceled` and the context's error. On Linux, tinygo waits for BlueZ to report the connection without a timeout, so a connection which BlueZ never completed held the caller for ever, whatever its context said. The pending connection is now cancelled through BlueZ (`org.bluez.Device1.Disconnect`, which also ends the waiting call), and a connection which completes after the caller gave up is closed. On macOS and Windows the context's deadline is passed on as the connection timeout of tinygo.
