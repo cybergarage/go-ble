@@ -222,6 +222,9 @@ func (dev *tinyDevice) Connect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if err := waitForScanStop(ctx); err != nil {
+		return err
+	}
 	connParams := bluetooth.ConnectionParams{} // nolint: exhaustruct,exhaustruct_v5
 	// The timeout of the parameters is honoured on macOS and Windows; the
 	// Linux implementation ignores it and waits for BlueZ, which
@@ -239,6 +242,29 @@ func (dev *tinyDevice) Connect(ctx context.Context) error {
 	}
 	dev.tinyDev = &tinyDev
 	return nil
+}
+
+// scanStopWait bounds how long Connect waits for a scan which was asked to
+// stop to really stop; tests shorten it.
+var scanStopWait = 3 * time.Second
+
+// waitForScanStop waits, for up to scanStopWait, until no scan holds the
+// adapter. A scan whose context is done stops at the next advertisement
+// (see Scan), and BlueZ aborts a connection attempted while it still
+// scans ("le-connection-abort-by-local"). Without an advertisement within
+// scanStopWait, the connection is attempted anyway, as before.
+func waitForScanStop(ctx context.Context) error {
+	timer := time.NewTimer(scanStopWait)
+	defer timer.Stop()
+	select {
+	case scanOwner <- struct{}{}:
+		<-scanOwner
+		return nil
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // connectWithContext runs connect, and returns when it returns or when the

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-11-17
+
+A connection no longer races a scan which is still stopping.
+
+### Fixed
+
+- `Device.Connect()` waits, for up to 3 seconds and not past its context, for a scan which still holds the adapter to stop. `Scan()` returns when its context is done, but the scan itself stops at the next advertisement, and BlueZ aborts a connection attempted while it still scans (`le-connection-abort-by-local`). Without an advertisement within the wait, the connection is attempted as before.
+
 ## [0.9.1] - 2026-11-14
 
 A connection now honors its context, so a caller such as go-matter can bound each connection attempt.

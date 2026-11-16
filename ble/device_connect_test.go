@@ -122,3 +122,42 @@ func TestConnectWithAContextWhichHasEnded(t *testing.T) {
 		t.Fatalf("Connect() = %v", err)
 	}
 }
+
+// Connect waits for a scan which still holds the adapter to stop, for up to
+// scanStopWait, and not past its context.
+func TestWaitForScanStop(t *testing.T) {
+	saved := scanStopWait
+	t.Cleanup(func() { scanStopWait = saved })
+	scanStopWait = 100 * time.Millisecond
+
+	// No scan: no wait.
+	start := time.Now()
+	if err := waitForScanStop(context.Background()); err != nil || time.Since(start) > 50*time.Millisecond {
+		t.Fatalf("without a scan: %v after %v", err, time.Since(start))
+	}
+
+	// A scan which stops: the wait ends with it.
+	scanOwner <- struct{}{}
+	go func() {
+		time.Sleep(20 * time.Millisecond)
+		<-scanOwner
+	}()
+	start = time.Now()
+	if err := waitForScanStop(context.Background()); err != nil || time.Since(start) < 15*time.Millisecond {
+		t.Fatalf("with a stopping scan: %v after %v", err, time.Since(start))
+	}
+
+	// A scan which does not stop: the wait ends after scanStopWait, or
+	// with the context.
+	scanOwner <- struct{}{}
+	defer func() { <-scanOwner }()
+	start = time.Now()
+	if err := waitForScanStop(context.Background()); err != nil || time.Since(start) < scanStopWait {
+		t.Fatalf("with a scan which does not stop: %v after %v", err, time.Since(start))
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := waitForScanStop(ctx); !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancelled: %v", err)
+	}
+}
