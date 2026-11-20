@@ -15,6 +15,7 @@
 package ble
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -24,6 +25,8 @@ import (
 
 	"tinygo.org/x/bluetooth"
 )
+
+const maxCachedServicesPerDevice = 64
 
 // This package holds the words of a UUID in the big-endian order, so the first
 // word holds the leading bytes of the UUID, as UUID.Bytes() and UUID.String()
@@ -50,10 +53,12 @@ func uuidToTinygo(u UUID) bluetooth.UUID {
 
 type tinyDevice struct {
 	*baseDevice
-	scanResult    bluetooth.ScanResult
+	address       bluetooth.Address
+	localName     string
 	manufacturers []Manufacturer
 	rssi          int
-	adServiceMap  sync.Map
+	adServiceMu   sync.RWMutex
+	adServiceMap  map[UUID]Service
 	tinyDev       *bluetooth.Device
 }
 
@@ -64,19 +69,20 @@ func newDeviceFromScanResult(scanResult bluetooth.ScanResult) *tinyDevice {
 	manufacturerData := scanResult.ManufacturerData()
 	manufacturers := make([]Manufacturer, 0, len(manufacturerData))
 	for _, md := range manufacturerData {
-		manufacturers = append(manufacturers, newManufacturer(int(md.CompanyID), md.Data))
+		manufacturers = append(manufacturers, newManufacturer(int(md.CompanyID), bytes.Clone(md.Data)))
 	}
 
 	dev := &tinyDevice{
 		baseDevice:    newBaseDevice(),
 		manufacturers: manufacturers,
-		scanResult:    scanResult,
+		address:       scanResult.Address,
+		localName:     scanResult.LocalName(),
 		rssi:          int(scanResult.RSSI),
-		adServiceMap:  sync.Map{},
+		adServiceMap:  make(map[UUID]Service),
 		tinyDev:       nil,
 	}
 	for _, sd := range scanResult.ServiceData() {
-		dev.addServiceDataElement(sd)
+		dev.storeAdvertisedService(uuidFromTinygo(sd.UUID), sd.Data, true)
 	}
 	return dev
 }
@@ -99,12 +105,12 @@ func (dev *tinyDevice) Manufacturers() []Manufacturer {
 
 // LocalName returns the local name of the device.
 func (dev *tinyDevice) LocalName() string {
-	return dev.scanResult.LocalName()
+	return dev.localName
 }
 
 // Address returns the Bluetooth address of the device.
 func (dev *tinyDevice) Address() Address {
-	addr, _ := newAddressFromTiny(dev.scanResult.Address)
+	addr, _ := newAddressFromTiny(dev.address)
 	return addr
 }
 
@@ -114,12 +120,10 @@ func (dev *tinyDevice) RSSI() int {
 }
 
 func (dev *tinyDevice) lookupAdvertisedService(lookupUUID UUID) (Service, bool) {
-	for _, service := range dev.Services() {
-		if lookupUUID.Equal(service.UUID()) {
-			return service, true
-		}
-	}
-	return nil, false
+	dev.adServiceMu.RLock()
+	defer dev.adServiceMu.RUnlock()
+	service, ok := dev.adServiceMap[lookupUUID]
+	return service, ok
 }
 
 // LookupService looks up a Bluetooth service by its UUID.
@@ -176,30 +180,28 @@ func (dev *tinyDevice) LookupService(anyUUID any) (Service, bool) {
 	return nil, false
 }
 
-func (dev *tinyDevice) addServiceDataElement(sd bluetooth.ServiceDataElement) {
-	service := newService(
-		dev,
-		uuidFromTinygo(sd.UUID),
-		sd.Data,
-		[]Characteristic{}, // No characteristics in scan result
-	)
-	dev.addService(service)
-}
+// storeAdvertisedService keeps the first distinct services up to the limit.
+// replace allows duplicate UUIDs in the same scan result to keep their last value.
+func (dev *tinyDevice) storeAdvertisedService(uuid UUID, data []byte, replace bool) bool {
+	dev.adServiceMu.Lock()
+	defer dev.adServiceMu.Unlock()
 
-func (dev *tinyDevice) addService(service Service) {
-	dev.adServiceMap.Store(service.UUID(), service)
+	_, exists := dev.adServiceMap[uuid]
+	if exists && !replace || !exists && len(dev.adServiceMap) >= maxCachedServicesPerDevice {
+		return false
+	}
+	dev.adServiceMap[uuid] = newService(dev, uuid, bytes.Clone(data), nil)
+	return true
 }
 
 // Services returns the Bluetooth services of the device.
 func (dev *tinyDevice) Services() []Service {
-	services := make([]Service, 0)
-	dev.adServiceMap.Range(func(key, value any) bool {
-		service, ok := value.(Service)
-		if ok {
-			services = append(services, service)
-		}
-		return true
-	})
+	dev.adServiceMu.RLock()
+	defer dev.adServiceMu.RUnlock()
+	services := make([]Service, 0, len(dev.adServiceMap))
+	for _, service := range dev.adServiceMap {
+		services = append(services, service)
+	}
 	return services
 }
 

@@ -18,11 +18,14 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"text/tabwriter"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/cybergarage/go-ble/ble"
 	"github.com/spf13/viper"
@@ -83,6 +86,29 @@ func (obj deviceObject) record() []string {
 	}
 }
 
+func tableCell(value string) string {
+	if !utf8.ValidString(value) || strings.ContainsFunc(value, func(r rune) bool {
+		return !unicode.IsGraphic(r)
+	}) {
+		return strconv.QuoteToGraphic(value)
+	}
+	return value
+}
+
+func csvTextCell(value string) string {
+	// Some spreadsheet importers ignore leading whitespace or control
+	// characters when deciding whether a cell is a formula.
+	trimmed := strings.TrimLeftFunc(value, func(r rune) bool {
+		return unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r)
+	})
+	first, _ := utf8.DecodeRuneInString(trimmed)
+	if !utf8.ValidString(value) || strings.ContainsRune("=+-@＝＋－＠", first) || strings.HasPrefix(value, "\t") ||
+		strings.HasPrefix(value, "\r") || strings.HasPrefix(value, "\n") {
+		return "'" + value
+	}
+	return value
+}
+
 func deviceHeader() []string {
 	return []string{"ADDRESS", nameColumnStr, "MANUFACTURER", "RSSI", "SERVICES"}
 }
@@ -93,11 +119,12 @@ type deviceWriter struct {
 	mutex       sync.Mutex
 	format      Format
 	wroteHeader bool
+	out         io.Writer
 	tabWriter   *tabwriter.Writer
 	csvWriter   *csv.Writer
 }
 
-func newDeviceWriter() (*deviceWriter, error) {
+func newDeviceWriter(out io.Writer) (*deviceWriter, error) {
 	format, err := outputFormat()
 	if err != nil {
 		return nil, err
@@ -107,15 +134,16 @@ func newDeviceWriter() (*deviceWriter, error) {
 		mutex:       sync.Mutex{},
 		format:      format,
 		wroteHeader: false,
+		out:         out,
 		tabWriter:   nil,
 		csvWriter:   nil,
 	}
 
 	switch format {
 	case FormatTable:
-		writer.tabWriter = tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		writer.tabWriter = tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 	case FormatCSV:
-		writer.csvWriter = csv.NewWriter(os.Stdout)
+		writer.csvWriter = csv.NewWriter(out)
 	case FormatJSON:
 	}
 
@@ -137,7 +165,7 @@ func (writer *deviceWriter) Write(dev ble.Device) error {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(os.Stdout, string(b))
+		fmt.Fprintln(writer.out, string(b))
 	case FormatCSV:
 		if !writer.wroteHeader {
 			if err := writer.csvWriter.Write(deviceHeader()); err != nil {
@@ -145,6 +173,7 @@ func (writer *deviceWriter) Write(dev ble.Device) error {
 			}
 			writer.wroteHeader = true
 		}
+		obj.LocalName = csvTextCell(obj.LocalName)
 		if err := writer.csvWriter.Write(obj.record()); err != nil {
 			return err
 		}
@@ -154,7 +183,11 @@ func (writer *deviceWriter) Write(dev ble.Device) error {
 			fmt.Fprintln(writer.tabWriter, strings.Join(deviceHeader(), "\t"))
 			writer.wroteHeader = true
 		}
-		fmt.Fprintln(writer.tabWriter, strings.Join(obj.record(), "\t"))
+		record := obj.record()
+		for i, value := range record {
+			record[i] = tableCell(value)
+		}
+		fmt.Fprintln(writer.tabWriter, strings.Join(record, "\t"))
 		writer.tabWriter.Flush()
 	}
 

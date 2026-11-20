@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-11-21
+
+### Security
+
+- `blelookup scan` displays control characters in BLE device names as visible escape sequences in table output.
+- CSV output prefixes formula-like BLE device names with an apostrophe for spreadsheet import.
+- The scanner retains up to 1,024 devices and 64 advertised services per device. At the device limit, it evicts the least recently seen device.
+
 ## [0.9.2] - 2026-11-17
 
 A connection no longer races a scan which is still stopping.
