@@ -15,6 +15,7 @@
 package ble
 
 import (
+	"container/list"
 	"context"
 	"strings"
 	"sync"
@@ -23,20 +24,30 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
+const maxCachedDevices = 1024
+
+type cachedDevice struct {
+	device *tinyDevice
+	recent *list.Element
+}
+
 // tinyScanner scans for the Bluetooth devices with the shared adapter.
 //
 // The discovered devices are updated from the adapter callback goroutine and
 // they are read by the caller, so the device map is guarded by the mutex.
 type tinyScanner struct {
 	mutex   sync.RWMutex
-	devices map[string]*tinyDevice
+	devices map[string]cachedDevice
+	recent  list.List
 }
 
-// NewScanner creates a new Bluetooth scanner.
+// NewScanner creates a new Bluetooth scanner. It caches up to 1024 devices
+// across scans, evicting the least recently seen device at capacity. Each
+// device retains up to 64 distinct advertised services.
 func NewScanner() Scanner {
 	return &tinyScanner{
 		mutex:   sync.RWMutex{},
-		devices: map[string]*tinyDevice{},
+		devices: make(map[string]cachedDevice),
 	}
 }
 
@@ -46,8 +57,8 @@ func (s *tinyScanner) Devices() []Device {
 	defer s.mutex.RUnlock()
 
 	devs := make([]Device, 0, len(s.devices))
-	for _, dev := range s.devices {
-		devs = append(devs, dev)
+	for _, cached := range s.devices {
+		devs = append(devs, cached.device)
 	}
 
 	return devs
@@ -58,12 +69,12 @@ func (s *tinyScanner) LookupDevice(addr string) (Device, bool) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	dev, ok := s.devices[strings.ToUpper(addr)]
+	cached, ok := s.devices[strings.ToUpper(addr)]
 	if !ok {
 		return nil, false
 	}
 
-	return dev, true
+	return cached.device, true
 }
 
 // updateDevice adds or updates the device of the specified scan result, and
@@ -75,20 +86,26 @@ func (s *tinyScanner) updateDevice(scanDev *tinyDevice) *tinyDevice {
 	now := time.Now()
 	addrKey := strings.ToUpper(scanDev.Address().String())
 
-	discoveredDev, ok := s.devices[addrKey]
+	cached, ok := s.devices[addrKey]
 	if !ok {
-		s.devices[addrKey] = scanDev
+		if len(s.devices) == maxCachedDevices {
+			oldest := s.recent.Back()
+			oldestAddress, _ := oldest.Value.(string)
+			delete(s.devices, oldestAddress)
+			s.recent.Remove(oldest)
+		}
+		s.devices[addrKey] = cachedDevice{device: scanDev, recent: s.recent.PushFront(addrKey)}
 		return scanDev
 	}
 
+	s.recent.MoveToFront(cached.recent)
+	discoveredDev := cached.device
 	discoveredDev.lastSeenAt = now
 	discoveredDev.rssi = scanDev.RSSI()
 	for _, scanService := range scanDev.Services() {
-		if _, ok := discoveredDev.LookupService(scanService.UUID()); ok {
-			continue
+		if discoveredDev.storeAdvertisedService(scanService.UUID(), scanService.Data(), false) {
+			discoveredDev.modifiedAt = now
 		}
-		discoveredDev.addService(scanService)
-		discoveredDev.modifiedAt = now
 	}
 
 	return discoveredDev

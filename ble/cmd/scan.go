@@ -60,7 +60,7 @@ The scan stops after the timeout, or when it is interrupted.`,
 			return err
 		}
 
-		writer, err := newDeviceWriter()
+		writer, err := newDeviceWriter(os.Stdout)
 		if err != nil {
 			return err
 		}
